@@ -43,10 +43,10 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);height:100dv
 }
 .sbar input::placeholder{color:var(--muted)}
 
-/* FILTERS */
-#filters{
-  position:absolute;top:56px;left:12px;z-index:1000;
-  display:flex;gap:6px;pointer-events:none
+/* FILTER ROW */
+#filter-row{
+  position:absolute;top:56px;left:12px;right:12px;z-index:1000;
+  display:flex;gap:6px;align-items:center;flex-wrap:wrap;pointer-events:none
 }
 .fp{
   pointer-events:all;background:rgba(26,29,39,.95);border:1px solid var(--border);
@@ -60,9 +60,22 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);height:100dv
 .fp.on[data-f="contract"]{background:var(--contract);border-color:var(--contract)}
 .fp.on[data-f="part_time"]{background:var(--part);border-color:var(--part)}
 
-/* COUNT + DAYS */
+/* SALARY + DAYS */
+.sal-wrap{
+  pointer-events:all;background:rgba(26,29,39,.95);border:1px solid var(--border);
+  border-radius:20px;display:flex;align-items:center;gap:4px;padding:4px 10px;
+  backdrop-filter:blur(16px);font-size:12px;color:var(--muted)
+}
+.sal-wrap input{
+  width:72px;background:none;border:none;outline:none;color:var(--text);
+  font-size:12px;font-family:var(--font);text-align:center
+}
+.sal-wrap input::placeholder{color:var(--muted)}
+.sal-div{color:var(--border)}
+
+/* META ROW */
 #meta-row{
-  position:absolute;top:56px;right:12px;z-index:1000;
+  position:absolute;top:56px;right:12px;z-index:999;
   display:flex;gap:6px;align-items:center
 }
 .pill{
@@ -79,6 +92,26 @@ select.pill{
   background-repeat:no-repeat;background-position:right 8px center
 }
 
+/* DRAW MODE BUTTON */
+#draw-btn{
+  pointer-events:all;background:rgba(26,29,39,.95);border:1px solid var(--border);
+  border-radius:20px;color:var(--muted);font-size:12px;font-weight:600;
+  font-family:var(--font);padding:6px 12px;cursor:pointer;
+  transition:all .15s;backdrop-filter:blur(16px);white-space:nowrap;display:flex;
+  align-items:center;gap:5px
+}
+#draw-btn.active{background:var(--accent2);border-color:var(--accent2);color:#fff}
+
+/* DRAW HINT */
+#draw-hint{
+  position:absolute;top:108px;left:50%;transform:translateX(-50%);
+  z-index:1001;background:var(--accent2);color:#fff;
+  border-radius:20px;padding:8px 16px;font-size:13px;font-weight:600;
+  display:none;pointer-events:none;white-space:nowrap;
+  box-shadow:0 4px 16px rgba(124,95,245,.4)
+}
+#draw-hint.show{display:block}
+
 /* LOADING */
 #loading{
   position:absolute;inset:0;z-index:3000;
@@ -89,7 +122,7 @@ select.pill{
 .spinner{width:38px;height:38px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 .ltitle{font-size:15px;font-weight:700;color:var(--text)}
-.lsub{font-size:13px;color:var(--muted);text-align:center;max-width:240px;line-height:1.5}
+.lsub{font-size:13px;color:var(--muted);text-align:center;max-width:260px;line-height:1.5}
 
 /* ERROR */
 #err{
@@ -99,18 +132,6 @@ select.pill{
   display:none;max-width:300px;text-align:center;line-height:1.4
 }
 #err.show{display:block}
-
-/* PINS */
-.mp{
-  width:26px;height:26px;border-radius:50%;
-  border:2.5px solid rgba(255,255,255,.3);
-  cursor:pointer;transition:transform .15s,box-shadow .15s
-}
-.mp:hover,.mp.active{transform:scale(1.4);border-color:#fff}
-.mp.f{background:var(--full);box-shadow:0 2px 8px rgba(79,142,247,.5)}
-.mp.c{background:var(--contract);box-shadow:0 2px 8px rgba(247,95,122,.5)}
-.mp.p{background:var(--part);box-shadow:0 2px 8px rgba(46,196,123,.5)}
-.mp.active{box-shadow:0 0 0 3px rgba(255,255,255,.25),0 4px 16px rgba(0,0,0,.4)!important}
 
 /* SEARCH THIS AREA */
 #search-here{
@@ -124,6 +145,18 @@ select.pill{
 }
 #search-here.show{display:block}
 #search-here:hover{transform:translateX(-50%) scale(1.04)}
+
+/* PINS */
+.mp{
+  width:26px;height:26px;border-radius:50%;
+  border:2.5px solid rgba(255,255,255,.3);
+  cursor:pointer;transition:transform .15s,box-shadow .15s
+}
+.mp:hover,.mp.active{transform:scale(1.4);border-color:#fff}
+.mp.f{background:var(--full);box-shadow:0 2px 8px rgba(79,142,247,.5)}
+.mp.c{background:var(--contract);box-shadow:0 2px 8px rgba(247,95,122,.5)}
+.mp.p{background:var(--part);box-shadow:0 2px 8px rgba(46,196,123,.5)}
+.mp.active{box-shadow:0 0 0 3px rgba(255,255,255,.25),0 4px 16px rgba(0,0,0,.4)!important}
 
 /* BOTTOM SHEET */
 #sheet{
@@ -190,6 +223,7 @@ select.pill{
 </div>
 
 <div id="err"></div>
+<div id="draw-hint">📦 Click and drag to draw a search area</div>
 
 <div id="hdr">
   <div class="logo">🗺️ Job<span>Map</span></div>
@@ -199,22 +233,26 @@ select.pill{
   </div>
 </div>
 
-<div id="filters">
+<div id="filter-row">
   <button class="fp on" data-f="all">All</button>
   <button class="fp" data-f="full_time">Full-time</button>
   <button class="fp" data-f="contract">Contract</button>
   <button class="fp" data-f="part_time">Part-time</button>
-</div>
-
-<div id="meta-row">
-  <select class="pill" id="days-select">
+  <div class="sal-wrap">
+    <span>$</span>
+    <input id="sal-min" type="number" placeholder="Min" min="0" step="5000"/>
+    <span class="sal-div">–</span>
+    <input id="sal-max" type="number" placeholder="Max" min="0" step="5000"/>
+  </div>
+  <button id="draw-btn" onclick="toggleDraw()">📦 Draw area</button>
+  <select class="fp" id="days-select" style="border-radius:20px">
     <option value="1">Today</option>
     <option value="3">3 days</option>
     <option value="7" selected>7 days</option>
     <option value="14">14 days</option>
     <option value="30">30 days</option>
   </select>
-  <div class="pill"><strong id="cv">0</strong>&nbsp;jobs</div>
+  <div class="pill" style="margin-left:auto"><strong id="cv">0</strong>&nbsp;jobs</div>
 </div>
 
 <button id="search-here" onclick="searchArea()">🔍 Search this area</button>
@@ -244,6 +282,7 @@ select.pill{
 <script>
 const APP_ID  = 'f5d9cf06';
 const APP_KEY = '370bf1fcb104c08e81e3d18b6a8b2527';
+const WORKER  = 'https://little-bush-b0e3.nathanfrazer7.workers.dev';
 
 // ── MAP ──
 const map = L.map('map', {zoomControl: false}).setView([-33.82, 151.02], 11);
@@ -254,9 +293,11 @@ L.control.zoom({position: 'bottomright'}).addTo(map);
 
 let allJobs = [], markers = [], activeFilter = 'all', activeMarkerEl = null;
 let lastSearchCenter = null;
+let drawMode = false, drawStart = null, drawRect = null, searchBounds = null;
 const sheet  = document.getElementById('sheet');
 const leg    = document.getElementById('leg');
 const shBtn  = document.getElementById('search-here');
+const hint   = document.getElementById('draw-hint');
 
 // ── TYPE HELPERS ──
 function tc(cat) {
@@ -275,56 +316,114 @@ function emoji(s) {
   let h = 0; for (const c of s) h = (h*31 + c.charCodeAt(0)) & 0xffff;
   return EMOJIS[h % EMOJIS.length];
 }
-
 function jitter(v, a=0.015) { return v + (Math.random()-.5)*a; }
 
-// ── FETCH FROM ADZUNA ──
-async function fetchJobs(lat, lng, radiusKm, days, kw) {
-  const pages = [1, 2, 3];
+// ── DRAW MODE ──
+function toggleDraw() {
+  drawMode = !drawMode;
+  const btn = document.getElementById('draw-btn');
+  if (drawMode) {
+    btn.classList.add('active');
+    btn.textContent = '✕ Cancel draw';
+    hint.classList.add('show');
+    map.dragging.disable();
+    map.getContainer().style.cursor = 'crosshair';
+  } else {
+    cancelDraw();
+  }
+}
+
+function cancelDraw() {
+  drawMode = false;
+  drawStart = null;
+  if (drawRect) { map.removeLayer(drawRect); drawRect = null; }
+  const btn = document.getElementById('draw-btn');
+  btn.classList.remove('active');
+  btn.textContent = '📦 Draw area';
+  hint.classList.remove('show');
+  map.dragging.enable();
+  map.getContainer().style.cursor = '';
+}
+
+map.on('mousedown', e => {
+  if (!drawMode) return;
+  drawStart = e.latlng;
+  if (drawRect) { map.removeLayer(drawRect); drawRect = null; }
+});
+
+map.on('mousemove', e => {
+  if (!drawMode || !drawStart) return;
+  const bounds = L.latLngBounds(drawStart, e.latlng);
+  if (drawRect) {
+    drawRect.setBounds(bounds);
+  } else {
+    drawRect = L.rectangle(bounds, {
+      color: '#7c5ff5', weight: 2, fillColor: '#7c5ff5', fillOpacity: 0.1,
+      dashArray: '6,4'
+    }).addTo(map);
+  }
+});
+
+map.on('mouseup', async e => {
+  if (!drawMode || !drawStart) return;
+  const bounds = L.latLngBounds(drawStart, e.latlng);
+  if (bounds.getNorthEast().distanceTo(bounds.getSouthWest()) < 500) {
+    cancelDraw();
+    return;
+  }
+  searchBounds = bounds;
+  cancelDraw();
+  if (drawRect) drawRect.setStyle({color:'#4f8ef7', fillColor:'#4f8ef7'});
+  await searchByBounds(bounds);
+});
+
+// Touch support for draw
+let touchDrawing = false;
+map.getContainer().addEventListener('touchstart', e => {
+  if (!drawMode) return;
+  touchDrawing = true;
+  const t = e.touches[0];
+  const latlng = map.containerPointToLatLng([t.clientX, t.clientY]);
+  drawStart = latlng;
+  e.preventDefault();
+}, {passive: false});
+
+map.getContainer().addEventListener('touchmove', e => {
+  if (!drawMode || !touchDrawing || !drawStart) return;
+  const t = e.touches[0];
+  const latlng = map.containerPointToLatLng([t.clientX - map.getContainer().getBoundingClientRect().left, t.clientY - map.getContainer().getBoundingClientRect().top]);
+  const bounds = L.latLngBounds(drawStart, latlng);
+  if (drawRect) { drawRect.setBounds(bounds); } 
+  else { drawRect = L.rectangle(bounds, {color:'#7c5ff5',weight:2,fillColor:'#7c5ff5',fillOpacity:0.1,dashArray:'6,4'}).addTo(map); }
+  e.preventDefault();
+}, {passive: false});
+
+map.getContainer().addEventListener('touchend', async e => {
+  if (!drawMode || !touchDrawing || !drawStart) return;
+  touchDrawing = false;
+  const t = e.changedTouches[0];
+  const latlng = map.containerPointToLatLng([t.clientX - map.getContainer().getBoundingClientRect().left, t.clientY - map.getContainer().getBoundingClientRect().top]);
+  const bounds = L.latLngBounds(drawStart, latlng);
+  searchBounds = bounds;
+  cancelDraw();
+  await searchByBounds(bounds);
+}, {passive: false});
+
+// ── FETCH ──
+async function fetchJobsForArea(params) {
+  const pages = [1, 2, 3, 4, 5];
   const results = [];
-  const daysOld = days || 7;
-
-  // Reverse geocode to get a suburb/city name — Adzuna's 'where' works better with names
-  let placeName = 'Sydney';
-  try {
-    const geo = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`);
-    const gd = await geo.json();
-    placeName = gd.address?.suburb || gd.address?.town || gd.address?.city_district || gd.address?.city || 'Sydney';
-  } catch(e) { console.warn('Geocode failed, using Sydney'); }
-
-  console.log('Searching Adzuna near:', placeName, 'radius:', radiusKm, 'km, days:', daysOld);
-  document.getElementById('lsub').textContent = `Searching near ${placeName}…`;
-
   for (const page of pages) {
-    const params = new URLSearchParams({
-      app_id: APP_ID,
-      app_key: APP_KEY,
-      results_per_page: 20,
-      where: placeName,
-      distance: radiusKm || 30,
-      max_days_old: daysOld,
-      sort_by: 'date',
-    });
-    if (kw) params.set('what', kw);
-
-    const url = `https://little-bush-b0e3.nathanfrazer7.workers.dev/v1/api/jobs/au/search/${page}?${params}`;
-    console.log('Fetching:', url);
-
+    params.set('page', page);
+    const url = `${WORKER}/v1/api/jobs/au/search/${page}?${params}`;
     try {
       const r = await fetch(url);
-      if (!r.ok) {
-        const errText = await r.text();
-        throw new Error(`HTTP ${r.status}: ${errText.substring(0,200)}`);
-      }
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
       const data = await r.json();
-      console.log(`Page ${page}: ${data.results?.length || 0} results (total count: ${data.count})`);
-      if (data.results && data.results.length > 0) {
-        results.push(...data.results);
-      } else {
-        break;
-      }
+      document.getElementById('lsub').textContent = `Found ${results.length + (data.results?.length||0)} jobs…`;
+      if (data.results?.length > 0) results.push(...data.results);
+      else break;
     } catch(e) {
-      console.warn('Page', page, 'failed:', e.message);
       if (page === 1) throw e;
       break;
     }
@@ -332,29 +431,105 @@ async function fetchJobs(lat, lng, radiusKm, days, kw) {
   return results;
 }
 
-// ── RENDER PINS ──
-function render() {
-  markers.forEach(m => map.removeLayer(m));
-  markers = [];
+async function fetchJobs(lat, lng, radiusKm, days, kw, salMin, salMax) {
+  let placeName = 'Sydney';
+  try {
+    const geo = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`);
+    const gd = await geo.json();
+    placeName = gd.address?.suburb || gd.address?.town || gd.address?.city_district || gd.address?.city || 'Sydney';
+  } catch(e) {}
 
+  document.getElementById('lsub').textContent = `Searching near ${placeName}…`;
+
+  const params = new URLSearchParams({
+    app_id: APP_ID, app_key: APP_KEY,
+    results_per_page: 20,
+    where: placeName,
+    distance: radiusKm || 30,
+    max_days_old: days || 7,
+    sort_by: 'date',
+  });
+  if (kw) params.set('what', kw);
+  if (salMin) params.set('salary_min', salMin);
+  if (salMax) params.set('salary_max', salMax);
+
+  return fetchJobsForArea(params);
+}
+
+async function searchByBounds(bounds) {
+  const days = parseInt(document.getElementById('days-select').value);
+  const kw   = document.getElementById('kw').value.trim() || undefined;
+  const salMin = document.getElementById('sal-min').value || undefined;
+  const salMax = document.getElementById('sal-max').value || undefined;
+  const centre = bounds.getCenter();
+
+  // Calculate radius from bounding box diagonal
+  const radiusKm = Math.round(bounds.getNorthEast().distanceTo(bounds.getSouthWest()) / 2000);
+
+  document.getElementById('loading').classList.remove('hide');
+  document.getElementById('err').classList.remove('show');
+  document.getElementById('refresh').classList.add('spinning');
+  document.getElementById('lsub').textContent = `Searching selected area…`;
+  shBtn.classList.remove('show');
+  closeSheet();
+
+  try {
+    let placeName = 'Sydney';
+    try {
+      const geo = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${centre.lat}&lon=${centre.lng}&format=json`);
+      const gd = await geo.json();
+      placeName = gd.address?.suburb || gd.address?.town || gd.address?.city || 'Sydney';
+    } catch(e) {}
+
+    const params = new URLSearchParams({
+      app_id: APP_ID, app_key: APP_KEY,
+      results_per_page: 20,
+      where: placeName,
+      distance: Math.max(5, Math.min(60, radiusKm)),
+      max_days_old: days,
+      sort_by: 'date',
+    });
+    if (kw) params.set('what', kw);
+    if (salMin) params.set('salary_min', salMin);
+    if (salMax) params.set('salary_max', salMax);
+
+    const raw = await fetchJobsForArea(params);
+    processResults(raw, centre);
+  } catch(e) {
+    showErr('Could not load jobs. Try again.');
+  }
+
+  document.getElementById('loading').classList.add('hide');
+  document.getElementById('refresh').classList.remove('spinning');
+}
+
+function processResults(raw, centre) {
+  allJobs = raw.map(j => {
+    const lat = j.latitude  ? parseFloat(j.latitude)  : jitter(centre.lat, 0.08);
+    const lng = j.longitude ? parseFloat(j.longitude) : jitter(centre.lng, 0.08);
+    return { ...j, _lat: jitter(lat, 0.003), _lng: jitter(lng, 0.003), _tc: tc(j.contract_time || j.contract_type || '') };
+  });
+  lastSearchCenter = centre;
+  render();
+  if (allJobs.length === 0) showErr('No jobs found. Try expanding the area or changing filters.');
+}
+
+// ── RENDER ──
+function render() {
+  markers.forEach(m => map.removeLayer(m)); markers = [];
   const kw = document.getElementById('kw').value.trim().toLowerCase();
   const typeMap = {full_time:'f', contract:'c', part_time:'p'};
 
   const visible = allJobs.filter(j => {
     if (activeFilter !== 'all' && j._tc !== typeMap[activeFilter]) return false;
-    if (kw) {
-      const haystack = `${j.title} ${j.company?.display_name||''} ${j.description||''} ${j.location?.display_name||''}`.toLowerCase();
-      if (!haystack.includes(kw)) return false;
-    }
+    if (kw && !`${j.title} ${j.company?.display_name||''} ${j.description||''} ${j.location?.display_name||''}`.toLowerCase().includes(kw)) return false;
     return true;
   });
 
   document.getElementById('cv').textContent = visible.length;
-
   visible.forEach(job => {
-    const cls = job._tc;
     const el = document.createElement('div');
-    el.className = `mp ${cls}`;
+    el.className = `mp ${job._tc}`;
     const icon = L.divIcon({html: el.outerHTML, className:'', iconSize:[26,26], iconAnchor:[13,13]});
     const mk = L.marker([job._lat, job._lng], {icon, zIndexOffset:100}).addTo(map);
     mk.on('click', e => { L.DomEvent.stopPropagation(e); openSheet(job, mk); });
@@ -362,7 +537,7 @@ function render() {
   });
 }
 
-// ── OPEN SHEET ──
+// ── SHEET ──
 function openSheet(job, mk) {
   if (activeMarkerEl) activeMarkerEl.classList.remove('active');
   const el = mk.getElement()?.querySelector('.mp');
@@ -375,20 +550,16 @@ function openSheet(job, mk) {
   document.getElementById('s-blurb').textContent = job.description || 'No description available.';
   document.getElementById('s-apply').href = job.redirect_url || job.url || '#';
 
-  // Format salary
   let salStr = '';
   if (job.salary_min && job.salary_max) {
-    const fmt = v => '$' + Math.round(v).toLocaleString();
-    salStr = `${fmt(job.salary_min)} – ${fmt(job.salary_max)}`;
+    salStr = `$${Math.round(job.salary_min).toLocaleString()} – $${Math.round(job.salary_max).toLocaleString()}`;
   } else if (job.salary_min) {
     salStr = `From $${Math.round(job.salary_min).toLocaleString()}`;
   }
 
-  // Posted date
   let posted = '';
   if (job.created) {
-    const d = new Date(job.created);
-    const diff = Math.round((Date.now() - d) / 86400000);
+    const diff = Math.round((Date.now() - new Date(job.created)) / 86400000);
     posted = diff === 0 ? 'Today' : diff === 1 ? 'Yesterday' : `${diff}d ago`;
   }
 
@@ -398,60 +569,40 @@ function openSheet(job, mk) {
   if (posted) tags += `<span class="stag tg">📅 ${posted}</span>`;
   document.getElementById('s-tags').innerHTML = tags;
 
-  sheet.classList.add('open');
-  leg.classList.add('up');
+  sheet.classList.add('open'); leg.classList.add('up');
 }
 
 function closeSheet() {
-  sheet.classList.remove('open');
-  leg.classList.remove('up');
+  sheet.classList.remove('open'); leg.classList.remove('up');
   if (activeMarkerEl) { activeMarkerEl.classList.remove('active'); activeMarkerEl = null; }
 }
 
-map.on('click', closeSheet);
+map.on('click', e => { if (!drawMode) closeSheet(); });
 document.getElementById('drag').addEventListener('click', closeSheet);
 
 // ── SEARCH AREA ──
 async function searchArea() {
+  if (drawRect) { map.removeLayer(drawRect); drawRect = null; }
   const centre = map.getCenter();
   const zoom = map.getZoom();
-  // Rough radius from zoom level
   const radius = Math.round(40000 / Math.pow(2, zoom - 8));
   const clampedRadius = Math.max(5, Math.min(50, radius));
-  const days = parseInt(document.getElementById('days-select').value);
-  const kw = document.getElementById('kw').value.trim() || undefined;
+  const days   = parseInt(document.getElementById('days-select').value);
+  const kw     = document.getElementById('kw').value.trim() || undefined;
+  const salMin = document.getElementById('sal-min').value || undefined;
+  const salMax = document.getElementById('sal-max').value || undefined;
 
   document.getElementById('loading').classList.remove('hide');
   document.getElementById('err').classList.remove('show');
   document.getElementById('refresh').classList.add('spinning');
-  document.getElementById('lsub').textContent = `Searching within ${clampedRadius}km…`;
   shBtn.classList.remove('show');
   closeSheet();
 
   try {
-    const raw = await fetchJobs(centre.lat, centre.lng, clampedRadius, days, kw);
-
-    // Attach type class + jittered coords
-    allJobs = raw.map(j => {
-      const lat = j.latitude  ? parseFloat(j.latitude)  : jitter(centre.lat, 0.08);
-      const lng = j.longitude ? parseFloat(j.longitude) : jitter(centre.lng, 0.08);
-      return {
-        ...j,
-        _lat: jitter(lat, 0.003),
-        _lng: jitter(lng, 0.003),
-        _tc: tc(j.contract_time || j.contract_type || '')
-      };
-    });
-
-    lastSearchCenter = centre;
-    render();
-
-    if (allJobs.length === 0) {
-      showErr('No jobs found in this area for the selected time period. Try zooming out or changing the date range.');
-    }
+    const raw = await fetchJobs(centre.lat, centre.lng, clampedRadius, days, kw, salMin, salMax);
+    processResults(raw, centre);
   } catch(e) {
-    console.error(e);
-    showErr('Could not load jobs. Check your API credentials or try again.');
+    showErr('Could not load jobs. Try again.');
   }
 
   document.getElementById('loading').classList.add('hide');
@@ -460,24 +611,19 @@ async function searchArea() {
 
 function showErr(msg) {
   const el = document.getElementById('err');
-  el.textContent = msg;
-  el.classList.add('show');
+  el.textContent = msg; el.classList.add('show');
   setTimeout(() => el.classList.remove('show'), 6000);
 }
 
-// Show "search this area" when map moves significantly
 map.on('moveend zoomend', () => {
   if (!lastSearchCenter) return;
   const c = map.getCenter();
-  const dist = map.distance([c.lat, c.lng], [lastSearchCenter.lat, lastSearchCenter.lng]);
-  if (dist > 3000 || !lastSearchCenter) {
+  if (map.distance([c.lat, c.lng], [lastSearchCenter.lat, lastSearchCenter.lng]) > 3000) {
     shBtn.classList.add('show');
   }
-  // Re-filter visible jobs on zoom
   render();
 });
 
-// Filters
 document.querySelectorAll('.fp').forEach(b => {
   b.addEventListener('click', () => {
     document.querySelectorAll('.fp').forEach(x => x.classList.remove('on'));
@@ -487,23 +633,22 @@ document.querySelectorAll('.fp').forEach(b => {
   });
 });
 
-// Keyword search
 let kt;
 document.getElementById('kw').addEventListener('input', () => {
-  clearTimeout(kt);
-  kt = setTimeout(() => {
-    // If there's a keyword, re-search the API
-    if (lastSearchCenter) searchArea();
-    else render();
-  }, 600);
+  clearTimeout(kt); kt = setTimeout(() => { if (lastSearchCenter) searchArea(); else render(); }, 600);
 });
 
-// Days filter
 document.getElementById('days-select').addEventListener('change', () => {
   if (lastSearchCenter) searchArea();
 });
 
-// Initial load
+// Salary inputs — re-search on change
+['sal-min','sal-max'].forEach(id => {
+  document.getElementById(id).addEventListener('change', () => {
+    if (lastSearchCenter) searchArea();
+  });
+});
+
 searchArea();
 </script>
 </body>
