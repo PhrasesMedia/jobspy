@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>NSW Jobs Map</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0f1117;--surface:#1a1d27;--surface2:#22263a;
+  --accent:#4f8ef7;--accent2:#7c5ff5;
+  --text:#e8eaf0;--muted:#7a7f96;--border:#2a2f45;
+  --full:#4f8ef7;--contract:#f75f7a;--part:#2ec47b;
+  --r:14px;--font:'Inter',system-ui,sans-serif
+}
+body{font-family:var(--font);background:var(--bg);color:var(--text);height:100dvh;overflow:hidden}
+#map{width:100%;height:100dvh}
+.leaflet-tile-pane{filter:brightness(0.82) saturate(0.6) hue-rotate(195deg)}
+.leaflet-container{background:var(--bg)}
+.leaflet-control-zoom{margin-bottom:80px!important;margin-right:10px!important}
+
+/* HEADER */
+#hdr{
+  position:absolute;top:0;left:0;right:0;z-index:1000;
+  padding:10px 12px;display:flex;align-items:center;gap:8px;pointer-events:none
+}
+.logo{
+  pointer-events:all;background:rgba(26,29,39,.95);border:1px solid var(--border);
+  border-radius:10px;padding:7px 12px;display:flex;align-items:center;gap:6px;
+  font-weight:700;font-size:14px;backdrop-filter:blur(16px);flex-shrink:0
+}
+.logo span{color:var(--accent)}
+.sbar{
+  pointer-events:all;flex:1;background:rgba(26,29,39,.95);border:1px solid var(--border);
+  border-radius:10px;display:flex;align-items:center;gap:7px;padding:0 11px;
+  backdrop-filter:blur(16px)
+}
+.sbar input{
+  flex:1;background:none;border:none;outline:none;color:var(--text);
+  font-size:13px;padding:9px 0;font-family:var(--font)
+}
+.sbar input::placeholder{color:var(--muted)}
+
+/* FILTERS */
+#filters{
+  position:absolute;top:56px;left:12px;z-index:1000;
+  display:flex;gap:6px;pointer-events:none
+}
+.fp{
+  pointer-events:all;background:rgba(26,29,39,.95);border:1px solid var(--border);
+  border-radius:20px;color:var(--muted);font-size:12px;font-weight:600;
+  font-family:var(--font);padding:6px 12px;cursor:pointer;
+  transition:all .15s;backdrop-filter:blur(16px);white-space:nowrap
+}
+.fp.on{color:#fff}
+.fp.on[data-f="all"]{background:var(--accent);border-color:var(--accent)}
+.fp.on[data-f="full_time"]{background:var(--full);border-color:var(--full)}
+.fp.on[data-f="contract"]{background:var(--contract);border-color:var(--contract)}
+.fp.on[data-f="part_time"]{background:var(--part);border-color:var(--part)}
+
+/* COUNT + DAYS */
+#meta-row{
+  position:absolute;top:56px;right:12px;z-index:1000;
+  display:flex;gap:6px;align-items:center
+}
+.pill{
+  background:rgba(26,29,39,.95);border:1px solid var(--border);
+  border-radius:20px;padding:6px 12px;font-size:12px;
+  color:var(--muted);backdrop-filter:blur(16px);
+  display:flex;align-items:center;gap:5px;white-space:nowrap
+}
+.pill strong{color:var(--text)}
+select.pill{
+  cursor:pointer;outline:none;font-family:var(--font);
+  -webkit-appearance:none;padding-right:24px;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%237a7f96'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 8px center
+}
+
+/* LOADING */
+#loading{
+  position:absolute;inset:0;z-index:3000;
+  background:rgba(15,17,23,.88);backdrop-filter:blur(4px);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px
+}
+#loading.hide{display:none}
+.spinner{width:38px;height:38px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.ltitle{font-size:15px;font-weight:700;color:var(--text)}
+.lsub{font-size:13px;color:var(--muted);text-align:center;max-width:240px;line-height:1.5}
+
+/* ERROR */
+#err{
+  position:absolute;top:108px;left:50%;transform:translateX(-50%);
+  z-index:2000;background:#f75f7a;color:#fff;border-radius:10px;
+  padding:11px 16px;font-size:13px;font-weight:600;
+  display:none;max-width:300px;text-align:center;line-height:1.4
+}
+#err.show{display:block}
+
+/* PINS */
+.mp{
+  width:26px;height:26px;border-radius:50%;
+  border:2.5px solid rgba(255,255,255,.3);
+  cursor:pointer;transition:transform .15s,box-shadow .15s
+}
+.mp:hover,.mp.active{transform:scale(1.4);border-color:#fff}
+.mp.f{background:var(--full);box-shadow:0 2px 8px rgba(79,142,247,.5)}
+.mp.c{background:var(--contract);box-shadow:0 2px 8px rgba(247,95,122,.5)}
+.mp.p{background:var(--part);box-shadow:0 2px 8px rgba(46,196,123,.5)}
+.mp.active{box-shadow:0 0 0 3px rgba(255,255,255,.25),0 4px 16px rgba(0,0,0,.4)!important}
+
+/* SEARCH THIS AREA */
+#search-here{
+  position:absolute;top:108px;left:50%;transform:translateX(-50%);
+  z-index:1000;background:var(--accent);color:#fff;
+  border:none;border-radius:20px;padding:9px 18px;
+  font-size:13px;font-weight:700;font-family:var(--font);
+  cursor:pointer;display:none;backdrop-filter:blur(16px);
+  box-shadow:0 4px 16px rgba(79,142,247,.4);white-space:nowrap;
+  transition:transform .15s,opacity .15s
+}
+#search-here.show{display:block}
+#search-here:hover{transform:translateX(-50%) scale(1.04)}
+
+/* BOTTOM SHEET */
+#sheet{
+  position:absolute;bottom:0;left:0;right:0;z-index:2000;
+  background:var(--surface);border-top:1px solid var(--border);
+  border-radius:20px 20px 0 0;padding:14px 16px 36px;
+  transform:translateY(100%);
+  transition:transform .3s cubic-bezier(.32,.72,0,1);
+  box-shadow:0 -8px 40px rgba(0,0,0,.5)
+}
+#sheet.open{transform:translateY(0)}
+.drag{width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 14px;cursor:pointer}
+.stop{display:flex;align-items:flex-start;gap:10px;margin-bottom:11px}
+.sicon{width:44px;height:44px;border-radius:10px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;border:1px solid var(--border)}
+.sinf{flex:1;min-width:0}
+.stit{font-size:16px;font-weight:700;margin-bottom:2px;line-height:1.25}
+.sco{font-size:13px;color:var(--muted)}
+.stags{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px}
+.stag{font-size:11px;font-weight:600;padding:4px 9px;border-radius:7px}
+.tf{background:rgba(79,142,247,.18);color:var(--full)}
+.tc{background:rgba(247,95,122,.18);color:var(--contract)}
+.tp{background:rgba(46,196,123,.18);color:var(--part)}
+.tg{background:rgba(255,255,255,.08);color:var(--muted);font-size:11px}
+.ts{background:rgba(124,95,245,.18);color:var(--accent2);font-weight:700}
+.sblurb{font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:14px;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
+.sapply{
+  display:block;width:100%;padding:13px;text-align:center;
+  background:var(--accent);color:#fff;border-radius:10px;
+  font-size:14px;font-weight:700;font-family:var(--font);
+  text-decoration:none;transition:opacity .15s
+}
+.sapply:hover{opacity:.85}
+
+/* LEGEND */
+#leg{
+  position:absolute;bottom:20px;left:12px;z-index:1000;
+  background:rgba(26,29,39,.95);border:1px solid var(--border);
+  border-radius:10px;padding:8px 12px;backdrop-filter:blur(16px);font-size:11px;
+  transition:bottom .3s cubic-bezier(.32,.72,0,1)
+}
+#leg.up{bottom:220px}
+.li{display:flex;align-items:center;gap:6px;padding:2px 0;color:var(--muted)}
+.ld{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+
+/* REFRESH */
+#refresh{
+  position:absolute;bottom:20px;right:12px;z-index:1000;
+  background:rgba(26,29,39,.95);border:1px solid var(--border);
+  border-radius:50%;width:42px;height:42px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;font-size:18px;
+  backdrop-filter:blur(16px);transition:transform .3s;color:var(--muted)
+}
+#refresh:hover{color:var(--text);transform:rotate(30deg)}
+#refresh.spinning{animation:spin .8s linear infinite}
+</style>
+</head>
+<body>
+<div id="map"></div>
+
+<div id="loading">
+  <div class="spinner"></div>
+  <div class="ltitle">Finding Jobs</div>
+  <div class="lsub" id="lsub">Searching Adzuna for NSW jobs…</div>
+</div>
+
+<div id="err"></div>
+
+<div id="hdr">
+  <div class="logo">🗺️ Job<span>Map</span></div>
+  <div class="sbar">
+    <span style="color:var(--muted)">🔍</span>
+    <input id="kw" type="text" placeholder="Title, company, skill…" />
+  </div>
+</div>
+
+<div id="filters">
+  <button class="fp on" data-f="all">All</button>
+  <button class="fp" data-f="full_time">Full-time</button>
+  <button class="fp" data-f="contract">Contract</button>
+  <button class="fp" data-f="part_time">Part-time</button>
+</div>
+
+<div id="meta-row">
+  <select class="pill" id="days-select">
+    <option value="1">Today</option>
+    <option value="3">3 days</option>
+    <option value="7" selected>7 days</option>
+    <option value="14">14 days</option>
+    <option value="30">30 days</option>
+  </select>
+  <div class="pill"><strong id="cv">0</strong>&nbsp;jobs</div>
+</div>
+
+<button id="search-here" onclick="searchArea()">🔍 Search this area</button>
+
+<div id="sheet">
+  <div class="drag" id="drag"></div>
+  <div class="stop">
+    <div class="sicon" id="s-icon">💼</div>
+    <div class="sinf">
+      <div class="stit" id="s-title"></div>
+      <div class="sco" id="s-company"></div>
+    </div>
+  </div>
+  <div class="stags" id="s-tags"></div>
+  <div class="sblurb" id="s-blurb"></div>
+  <a class="sapply" id="s-apply" href="#" target="_blank">Apply on Adzuna →</a>
+</div>
+
+<div id="leg">
+  <div class="li"><div class="ld" style="background:var(--full)"></div>Full-time</div>
+  <div class="li"><div class="ld" style="background:var(--contract)"></div>Contract</div>
+  <div class="li"><div class="ld" style="background:var(--part)"></div>Part-time</div>
+</div>
+
+<button id="refresh" title="Refresh" onclick="searchArea()">↻</button>
+
+<script>
+const APP_ID  = 'f5d9cf06';
+const APP_KEY = '370bf1fcb104c08e81e3d18b6a8b2527';
+
+// ── MAP ──
+const map = L.map('map', {zoomControl: false}).setView([-33.82, 151.02], 11);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '© OpenStreetMap', maxZoom: 19
+}).addTo(map);
+L.control.zoom({position: 'bottomright'}).addTo(map);
+
+let allJobs = [], markers = [], activeFilter = 'all', activeMarkerEl = null;
+let lastSearchCenter = null;
+const sheet  = document.getElementById('sheet');
+const leg    = document.getElementById('leg');
+const shBtn  = document.getElementById('search-here');
+
+// ── TYPE HELPERS ──
+function tc(cat) {
+  if (!cat) return 'f';
+  const c = (cat.__CLASS__ || cat || '').toLowerCase();
+  if (c.includes('part')) return 'p';
+  if (c.includes('contract') || c.includes('temp') || c.includes('casual')) return 'c';
+  return 'f';
+}
+function typeLabel(t) { return {f:'Full-time', c:'Contract', p:'Part-time'}[t]; }
+function typeCls(t)   { return {f:'tf', c:'tc', p:'tp'}[t]; }
+
+const EMOJIS = ['💼','🏢','💻','⚙️','🏗','🏥','🎯','📊','🔧','🌐','🚀','📡'];
+function emoji(s) {
+  if (!s) return '💼';
+  let h = 0; for (const c of s) h = (h*31 + c.charCodeAt(0)) & 0xffff;
+  return EMOJIS[h % EMOJIS.length];
+}
+
+function jitter(v, a=0.015) { return v + (Math.random()-.5)*a; }
+
+// ── FETCH FROM ADZUNA ──
+async function fetchJobs(lat, lng, radiusKm, days, kw) {
+  const pages = [1, 2, 3];
+  const results = [];
+  const daysOld = days || 7;
+
+  // Reverse geocode to get a suburb/city name — Adzuna's 'where' works better with names
+  let placeName = 'Sydney';
+  try {
+    const geo = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`);
+    const gd = await geo.json();
+    placeName = gd.address?.suburb || gd.address?.town || gd.address?.city_district || gd.address?.city || 'Sydney';
+  } catch(e) { console.warn('Geocode failed, using Sydney'); }
+
+  console.log('Searching Adzuna near:', placeName, 'radius:', radiusKm, 'km, days:', daysOld);
+  document.getElementById('lsub').textContent = `Searching near ${placeName}…`;
+
+  for (const page of pages) {
+    const params = new URLSearchParams({
+      app_id: APP_ID,
+      app_key: APP_KEY,
+      results_per_page: 50,
+      page,
+      where: placeName,
+      distance: radiusKm || 30,
+      max_days_old: daysOld,
+      sort_by: 'date',
+    });
+    if (kw) params.set('what', kw);
+
+    const url = `https://little-bush-b0e3.nathanfrazer7.workers.dev/v1/api/jobs/au/search/${page}?${params}`;
+    console.log('Fetching:', url);
+
+    try {
+      const r = await fetch(url);
+      if (!r.ok) {
+        const errText = await r.text();
+        throw new Error(`HTTP ${r.status}: ${errText.substring(0,200)}`);
+      }
+      const data = await r.json();
+      console.log(`Page ${page}: ${data.results?.length || 0} results (total count: ${data.count})`);
+      if (data.results && data.results.length > 0) {
+        results.push(...data.results);
+      } else {
+        break;
+      }
+    } catch(e) {
+      console.warn('Page', page, 'failed:', e.message);
+      if (page === 1) throw e;
+      break;
+    }
+  }
+  return results;
+}
+
+// ── RENDER PINS ──
+function render() {
+  markers.forEach(m => map.removeLayer(m));
+  markers = [];
+
+  const kw = document.getElementById('kw').value.trim().toLowerCase();
+  const typeMap = {full_time:'f', contract:'c', part_time:'p'};
+
+  const visible = allJobs.filter(j => {
+    if (activeFilter !== 'all' && j._tc !== typeMap[activeFilter]) return false;
+    if (kw) {
+      const haystack = `${j.title} ${j.company?.display_name||''} ${j.description||''} ${j.location?.display_name||''}`.toLowerCase();
+      if (!haystack.includes(kw)) return false;
+    }
+    return true;
+  });
+
+  document.getElementById('cv').textContent = visible.length;
+
+  visible.forEach(job => {
+    const cls = job._tc;
+    const el = document.createElement('div');
+    el.className = `mp ${cls}`;
+    const icon = L.divIcon({html: el.outerHTML, className:'', iconSize:[26,26], iconAnchor:[13,13]});
+    const mk = L.marker([job._lat, job._lng], {icon, zIndexOffset:100}).addTo(map);
+    mk.on('click', e => { L.DomEvent.stopPropagation(e); openSheet(job, mk); });
+    markers.push(mk);
+  });
+}
+
+// ── OPEN SHEET ──
+function openSheet(job, mk) {
+  if (activeMarkerEl) activeMarkerEl.classList.remove('active');
+  const el = mk.getElement()?.querySelector('.mp');
+  if (el) { el.classList.add('active'); activeMarkerEl = el; }
+
+  const t = job._tc;
+  document.getElementById('s-icon').textContent = emoji(job.company?.display_name);
+  document.getElementById('s-title').textContent = job.title;
+  document.getElementById('s-company').textContent = job.company?.display_name || 'Company not listed';
+  document.getElementById('s-blurb').textContent = job.description || 'No description available.';
+  document.getElementById('s-apply').href = job.redirect_url || job.url || '#';
+
+  // Format salary
+  let salStr = '';
+  if (job.salary_min && job.salary_max) {
+    const fmt = v => '$' + Math.round(v).toLocaleString();
+    salStr = `${fmt(job.salary_min)} – ${fmt(job.salary_max)}`;
+  } else if (job.salary_min) {
+    salStr = `From $${Math.round(job.salary_min).toLocaleString()}`;
+  }
+
+  // Posted date
+  let posted = '';
+  if (job.created) {
+    const d = new Date(job.created);
+    const diff = Math.round((Date.now() - d) / 86400000);
+    posted = diff === 0 ? 'Today' : diff === 1 ? 'Yesterday' : `${diff}d ago`;
+  }
+
+  let tags = `<span class="stag ${typeCls(t)}">${typeLabel(t)}</span>`;
+  if (salStr) tags += `<span class="stag ts">${salStr}</span>`;
+  if (job.location?.display_name) tags += `<span class="stag tg">📍 ${job.location.display_name}</span>`;
+  if (posted) tags += `<span class="stag tg">📅 ${posted}</span>`;
+  document.getElementById('s-tags').innerHTML = tags;
+
+  sheet.classList.add('open');
+  leg.classList.add('up');
+}
+
+function closeSheet() {
+  sheet.classList.remove('open');
+  leg.classList.remove('up');
+  if (activeMarkerEl) { activeMarkerEl.classList.remove('active'); activeMarkerEl = null; }
+}
+
+map.on('click', closeSheet);
+document.getElementById('drag').addEventListener('click', closeSheet);
+
+// ── SEARCH AREA ──
+async function searchArea() {
+  const centre = map.getCenter();
+  const zoom = map.getZoom();
+  // Rough radius from zoom level
+  const radius = Math.round(40000 / Math.pow(2, zoom - 8));
+  const clampedRadius = Math.max(5, Math.min(50, radius));
+  const days = parseInt(document.getElementById('days-select').value);
+  const kw = document.getElementById('kw').value.trim() || undefined;
+
+  document.getElementById('loading').classList.remove('hide');
+  document.getElementById('err').classList.remove('show');
+  document.getElementById('refresh').classList.add('spinning');
+  document.getElementById('lsub').textContent = `Searching within ${clampedRadius}km…`;
+  shBtn.classList.remove('show');
+  closeSheet();
+
+  try {
+    const raw = await fetchJobs(centre.lat, centre.lng, clampedRadius, days, kw);
+
+    // Attach type class + jittered coords
+    allJobs = raw.map(j => {
+      const lat = j.latitude  ? parseFloat(j.latitude)  : jitter(centre.lat, 0.08);
+      const lng = j.longitude ? parseFloat(j.longitude) : jitter(centre.lng, 0.08);
+      return {
+        ...j,
+        _lat: jitter(lat, 0.003),
+        _lng: jitter(lng, 0.003),
+        _tc: tc(j.contract_time || j.contract_type || '')
+      };
+    });
+
+    lastSearchCenter = centre;
+    render();
+
+    if (allJobs.length === 0) {
+      showErr('No jobs found in this area for the selected time period. Try zooming out or changing the date range.');
+    }
+  } catch(e) {
+    console.error(e);
+    showErr('Could not load jobs. Check your API credentials or try again.');
+  }
+
+  document.getElementById('loading').classList.add('hide');
+  document.getElementById('refresh').classList.remove('spinning');
+}
+
+function showErr(msg) {
+  const el = document.getElementById('err');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 6000);
+}
+
+// Show "search this area" when map moves significantly
+map.on('moveend zoomend', () => {
+  if (!lastSearchCenter) return;
+  const c = map.getCenter();
+  const dist = map.distance([c.lat, c.lng], [lastSearchCenter.lat, lastSearchCenter.lng]);
+  if (dist > 3000 || !lastSearchCenter) {
+    shBtn.classList.add('show');
+  }
+  // Re-filter visible jobs on zoom
+  render();
+});
+
+// Filters
+document.querySelectorAll('.fp').forEach(b => {
+  b.addEventListener('click', () => {
+    document.querySelectorAll('.fp').forEach(x => x.classList.remove('on'));
+    b.classList.add('on');
+    activeFilter = b.dataset.f;
+    render();
+  });
+});
+
+// Keyword search
+let kt;
+document.getElementById('kw').addEventListener('input', () => {
+  clearTimeout(kt);
+  kt = setTimeout(() => {
+    // If there's a keyword, re-search the API
+    if (lastSearchCenter) searchArea();
+    else render();
+  }, 600);
+});
+
+// Days filter
+document.getElementById('days-select').addEventListener('change', () => {
+  if (lastSearchCenter) searchArea();
+});
+
+// Initial load
+searchArea();
+</script>
+</body>
+</html>
