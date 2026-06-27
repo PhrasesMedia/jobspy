@@ -463,8 +463,8 @@ async function searchByBounds(bounds) {
   const salMax = document.getElementById('sal-max').value || undefined;
   const centre = bounds.getCenter();
 
-  // Calculate radius from bounding box diagonal
-  const radiusKm = Math.round(bounds.getNorthEast().distanceTo(bounds.getSouthWest()) / 2000);
+  // Use diagonal as radius to ensure full coverage, then clip to box after
+  const radiusKm = Math.ceil(bounds.getNorthEast().distanceTo(bounds.getSouthWest()) / 1000);
 
   document.getElementById('loading').classList.remove('hide');
   document.getElementById('err').classList.remove('show');
@@ -494,7 +494,14 @@ async function searchByBounds(bounds) {
     if (salMax) params.set('salary_max', salMax);
 
     const raw = await fetchJobsForArea(params);
-    processResults(raw, centre);
+
+    // Strictly clip to drawn bounding box
+    const clipped = raw.filter(j => {
+      if (!j.latitude || !j.longitude) return true; // keep jobs with no coords (they get jittered to centre)
+      return bounds.contains([parseFloat(j.latitude), parseFloat(j.longitude)]);
+    });
+
+    processResults(clipped, centre, bounds);
   } catch(e) {
     showErr('Could not load jobs. Try again.');
   }
@@ -503,10 +510,15 @@ async function searchByBounds(bounds) {
   document.getElementById('refresh').classList.remove('spinning');
 }
 
-function processResults(raw, centre) {
+function processResults(raw, centre, bounds) {
   allJobs = raw.map(j => {
-    const lat = j.latitude  ? parseFloat(j.latitude)  : jitter(centre.lat, 0.08);
-    const lng = j.longitude ? parseFloat(j.longitude) : jitter(centre.lng, 0.08);
+    let lat = j.latitude  ? parseFloat(j.latitude)  : centre.lat;
+    let lng = j.longitude ? parseFloat(j.longitude) : centre.lng;
+    // If we have a bounds box, jitter only keeps pins inside it
+    if (bounds && (!j.latitude || !j.longitude)) {
+      lat = bounds.getSouth() + Math.random() * (bounds.getNorth() - bounds.getSouth());
+      lng = bounds.getWest()  + Math.random() * (bounds.getEast()  - bounds.getWest());
+    }
     return { ...j, _lat: jitter(lat, 0.003), _lng: jitter(lng, 0.003), _tc: tc(j.contract_time || j.contract_type || '') };
   });
   lastSearchCenter = centre;
