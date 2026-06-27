@@ -411,10 +411,10 @@ map.getContainer().addEventListener('touchend', async e => {
 
 // ── FETCH ──
 async function fetchJobsForArea(params) {
-  const pages = [1, 2, 3, 4, 5];
   const results = [];
-  for (const page of pages) {
-    params.set('page', page);
+  // Remove page from params — it goes in the URL path only
+  params.delete('page');
+  for (const page of [1, 2, 3, 4, 5]) {
     const url = `${WORKER}/v1/api/jobs/au/search/${page}?${params}`;
     try {
       const r = await fetch(url);
