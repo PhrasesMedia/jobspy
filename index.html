@@ -299,8 +299,7 @@ async function fetchJobs(lat, lng, radiusKm, days, kw) {
     const params = new URLSearchParams({
       app_id: APP_ID,
       app_key: APP_KEY,
-      results_per_page: 50,
-      page,
+      results_per_page: 20,
       where: placeName,
       distance: radiusKm || 30,
       max_days_old: daysOld,
