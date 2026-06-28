@@ -21,152 +21,55 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);height:100dv
 .leaflet-container{background:var(--bg)}
 .leaflet-control-zoom{margin-bottom:80px!important;margin-right:10px!important}
 
-/* HEADER */
-#hdr{
-  position:absolute;top:0;left:0;right:0;z-index:1000;
-  padding:10px 12px;display:flex;align-items:center;gap:8px;pointer-events:none
-}
-.logo{
-  pointer-events:all;background:rgba(26,29,39,.95);border:1px solid var(--border);
-  border-radius:10px;padding:7px 12px;display:flex;align-items:center;gap:6px;
-  font-weight:700;font-size:14px;backdrop-filter:blur(16px);flex-shrink:0
-}
+#hdr{position:absolute;top:0;left:0;right:0;z-index:1000;padding:10px 12px;display:flex;align-items:center;gap:8px;pointer-events:none}
+.logo{pointer-events:all;background:rgba(26,29,39,.95);border:1px solid var(--border);border-radius:10px;padding:7px 12px;display:flex;align-items:center;gap:6px;font-weight:700;font-size:14px;backdrop-filter:blur(16px);flex-shrink:0}
 .logo span{color:var(--accent)}
-.sbar{
-  pointer-events:all;flex:1;background:rgba(26,29,39,.95);border:1px solid var(--border);
-  border-radius:10px;display:flex;align-items:center;gap:7px;padding:0 11px;
-  backdrop-filter:blur(16px)
-}
-.sbar input{
-  flex:1;background:none;border:none;outline:none;color:var(--text);
-  font-size:13px;padding:9px 0;font-family:var(--font)
-}
+.sbar{pointer-events:all;flex:1;background:rgba(26,29,39,.95);border:1px solid var(--border);border-radius:10px;display:flex;align-items:center;gap:7px;padding:0 11px;backdrop-filter:blur(16px)}
+.sbar input{flex:1;background:none;border:none;outline:none;color:var(--text);font-size:13px;padding:9px 0;font-family:var(--font)}
 .sbar input::placeholder{color:var(--muted)}
 
-/* FILTER ROW */
-#filter-row{
-  position:absolute;top:56px;left:12px;right:12px;z-index:1000;
-  display:flex;gap:6px;align-items:center;flex-wrap:wrap;pointer-events:none
-}
-.fp{
-  pointer-events:all;background:rgba(26,29,39,.95);border:1px solid var(--border);
-  border-radius:20px;color:var(--muted);font-size:12px;font-weight:600;
-  font-family:var(--font);padding:6px 12px;cursor:pointer;
-  transition:all .15s;backdrop-filter:blur(16px);white-space:nowrap
-}
+#filter-row{position:absolute;top:56px;left:12px;right:12px;z-index:1000;display:flex;gap:6px;align-items:center;flex-wrap:wrap;pointer-events:none}
+.fp{pointer-events:all;background:rgba(26,29,39,.95);border:1px solid var(--border);border-radius:20px;color:var(--muted);font-size:12px;font-weight:600;font-family:var(--font);padding:6px 12px;cursor:pointer;transition:all .15s;backdrop-filter:blur(16px);white-space:nowrap}
 .fp.on{color:#fff}
 .fp.on[data-f="all"]{background:var(--accent);border-color:var(--accent)}
 .fp.on[data-f="full_time"]{background:var(--full);border-color:var(--full)}
 .fp.on[data-f="contract"]{background:var(--contract);border-color:var(--contract)}
 .fp.on[data-f="part_time"]{background:var(--part);border-color:var(--part)}
-
-/* SALARY + DAYS */
-.sal-wrap{
-  pointer-events:all;background:rgba(26,29,39,.95);border:1px solid var(--border);
-  border-radius:20px;display:flex;align-items:center;gap:4px;padding:4px 10px;
-  backdrop-filter:blur(16px);font-size:12px;color:var(--muted)
-}
-.sal-wrap input{
-  width:72px;background:none;border:none;outline:none;color:var(--text);
-  font-size:12px;font-family:var(--font);text-align:center
-}
+.sal-wrap{pointer-events:all;background:rgba(26,29,39,.95);border:1px solid var(--border);border-radius:20px;display:flex;align-items:center;gap:4px;padding:4px 10px;backdrop-filter:blur(16px);font-size:12px;color:var(--muted)}
+.sal-wrap input{width:72px;background:none;border:none;outline:none;color:var(--text);font-size:12px;font-family:var(--font);text-align:center}
 .sal-wrap input::placeholder{color:var(--muted)}
 .sal-div{color:var(--border)}
-
-/* META ROW */
-#meta-row{
-  position:absolute;top:56px;right:12px;z-index:999;
-  display:flex;gap:6px;align-items:center
-}
-.pill{
-  background:rgba(26,29,39,.95);border:1px solid var(--border);
-  border-radius:20px;padding:6px 12px;font-size:12px;
-  color:var(--muted);backdrop-filter:blur(16px);
-  display:flex;align-items:center;gap:5px;white-space:nowrap
-}
-.pill strong{color:var(--text)}
-select.pill{
-  cursor:pointer;outline:none;font-family:var(--font);
-  -webkit-appearance:none;padding-right:24px;
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%237a7f96'/%3E%3C/svg%3E");
-  background-repeat:no-repeat;background-position:right 8px center
-}
-
-/* DRAW MODE BUTTON */
-#draw-btn{
-  pointer-events:all;background:rgba(26,29,39,.95);border:1px solid var(--border);
-  border-radius:20px;color:var(--muted);font-size:12px;font-weight:600;
-  font-family:var(--font);padding:6px 12px;cursor:pointer;
-  transition:all .15s;backdrop-filter:blur(16px);white-space:nowrap;display:flex;
-  align-items:center;gap:5px
-}
+#draw-btn{pointer-events:all;background:rgba(26,29,39,.95);border:1px solid var(--border);border-radius:20px;color:var(--muted);font-size:12px;font-weight:600;font-family:var(--font);padding:6px 12px;cursor:pointer;transition:all .15s;backdrop-filter:blur(16px);white-space:nowrap;display:flex;align-items:center;gap:5px}
 #draw-btn.active{background:var(--accent2);border-color:var(--accent2);color:#fff}
+.pill{background:rgba(26,29,39,.95);border:1px solid var(--border);border-radius:20px;padding:6px 12px;font-size:12px;color:var(--muted);backdrop-filter:blur(16px);display:flex;align-items:center;gap:5px;white-space:nowrap}
+.pill strong{color:var(--text)}
+select.pill{cursor:pointer;outline:none;font-family:var(--font);-webkit-appearance:none;padding-right:24px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%237a7f96'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center}
 
-/* DRAW HINT */
-#draw-hint{
-  position:absolute;top:108px;left:50%;transform:translateX(-50%);
-  z-index:1001;background:var(--accent2);color:#fff;
-  border-radius:20px;padding:8px 16px;font-size:13px;font-weight:600;
-  display:none;pointer-events:none;white-space:nowrap;
-  box-shadow:0 4px 16px rgba(124,95,245,.4)
-}
+#draw-hint{position:absolute;top:108px;left:50%;transform:translateX(-50%);z-index:1001;background:var(--accent2);color:#fff;border-radius:20px;padding:8px 16px;font-size:13px;font-weight:600;display:none;pointer-events:none;white-space:nowrap;box-shadow:0 4px 16px rgba(124,95,245,.4)}
 #draw-hint.show{display:block}
 
-/* LOADING */
-#loading{
-  position:absolute;inset:0;z-index:3000;
-  background:rgba(15,17,23,.88);backdrop-filter:blur(4px);
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px
-}
+#loading{position:absolute;inset:0;z-index:3000;background:rgba(15,17,23,.88);backdrop-filter:blur(4px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px}
 #loading.hide{display:none}
 .spinner{width:38px;height:38px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 .ltitle{font-size:15px;font-weight:700;color:var(--text)}
 .lsub{font-size:13px;color:var(--muted);text-align:center;max-width:260px;line-height:1.5}
 
-/* ERROR */
-#err{
-  position:absolute;top:108px;left:50%;transform:translateX(-50%);
-  z-index:2000;background:#f75f7a;color:#fff;border-radius:10px;
-  padding:11px 16px;font-size:13px;font-weight:600;
-  display:none;max-width:300px;text-align:center;line-height:1.4
-}
+#err{position:absolute;top:108px;left:50%;transform:translateX(-50%);z-index:2000;background:#f75f7a;color:#fff;border-radius:10px;padding:11px 16px;font-size:13px;font-weight:600;display:none;max-width:300px;text-align:center;line-height:1.4}
 #err.show{display:block}
 
-/* SEARCH THIS AREA */
-#search-here{
-  position:absolute;top:108px;left:50%;transform:translateX(-50%);
-  z-index:1000;background:var(--accent);color:#fff;
-  border:none;border-radius:20px;padding:9px 18px;
-  font-size:13px;font-weight:700;font-family:var(--font);
-  cursor:pointer;display:none;backdrop-filter:blur(16px);
-  box-shadow:0 4px 16px rgba(79,142,247,.4);white-space:nowrap;
-  transition:transform .15s,opacity .15s
-}
+#search-here{position:absolute;top:108px;left:50%;transform:translateX(-50%);z-index:1000;background:var(--accent);color:#fff;border:none;border-radius:20px;padding:9px 18px;font-size:13px;font-weight:700;font-family:var(--font);cursor:pointer;display:none;backdrop-filter:blur(16px);box-shadow:0 4px 16px rgba(79,142,247,.4);white-space:nowrap;transition:transform .15s,opacity .15s}
 #search-here.show{display:block}
 #search-here:hover{transform:translateX(-50%) scale(1.04)}
 
-/* PINS */
-.mp{
-  width:26px;height:26px;border-radius:50%;
-  border:2.5px solid rgba(255,255,255,.3);
-  cursor:pointer;transition:transform .15s,box-shadow .15s
-}
+.mp{width:26px;height:26px;border-radius:50%;border:2.5px solid rgba(255,255,255,.3);cursor:pointer;transition:transform .15s,box-shadow .15s}
 .mp:hover,.mp.active{transform:scale(1.4);border-color:#fff}
 .mp.f{background:var(--full);box-shadow:0 2px 8px rgba(79,142,247,.5)}
 .mp.c{background:var(--contract);box-shadow:0 2px 8px rgba(247,95,122,.5)}
 .mp.p{background:var(--part);box-shadow:0 2px 8px rgba(46,196,123,.5)}
 .mp.active{box-shadow:0 0 0 3px rgba(255,255,255,.25),0 4px 16px rgba(0,0,0,.4)!important}
 
-/* BOTTOM SHEET */
-#sheet{
-  position:absolute;bottom:0;left:0;right:0;z-index:2000;
-  background:var(--surface);border-top:1px solid var(--border);
-  border-radius:20px 20px 0 0;padding:14px 16px 36px;
-  transform:translateY(100%);
-  transition:transform .3s cubic-bezier(.32,.72,0,1);
-  box-shadow:0 -8px 40px rgba(0,0,0,.5)
-}
+#sheet{position:absolute;bottom:0;left:0;right:0;z-index:2000;background:var(--surface);border-top:1px solid var(--border);border-radius:20px 20px 0 0;padding:14px 16px 36px;transform:translateY(100%);transition:transform .3s cubic-bezier(.32,.72,0,1);box-shadow:0 -8px 40px rgba(0,0,0,.5)}
 #sheet.open{transform:translateY(0)}
 .drag{width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 14px;cursor:pointer}
 .stop{display:flex;align-items:flex-start;gap:10px;margin-bottom:11px}
@@ -182,33 +85,20 @@ select.pill{
 .tg{background:rgba(255,255,255,.08);color:var(--muted);font-size:11px}
 .ts{background:rgba(124,95,245,.18);color:var(--accent2);font-weight:700}
 .sblurb{font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:14px;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
-.sapply{
-  display:block;width:100%;padding:13px;text-align:center;
-  background:var(--accent);color:#fff;border-radius:10px;
-  font-size:14px;font-weight:700;font-family:var(--font);
-  text-decoration:none;transition:opacity .15s
-}
-.sapply:hover{opacity:.85}
 
-/* LEGEND */
-#leg{
-  position:absolute;bottom:20px;left:12px;z-index:1000;
-  background:rgba(26,29,39,.95);border:1px solid var(--border);
-  border-radius:10px;padding:8px 12px;backdrop-filter:blur(16px);font-size:11px;
-  transition:bottom .3s cubic-bezier(.32,.72,0,1)
-}
+/* Action buttons row */
+.sactions{display:flex;gap:8px;margin-top:4px}
+.sapply{flex:1;display:block;padding:13px;text-align:center;background:var(--accent);color:#fff;border-radius:10px;font-size:14px;font-weight:700;font-family:var(--font);text-decoration:none;transition:opacity .15s}
+.sapply:hover{opacity:.85}
+.scall{flex-shrink:0;display:flex;align-items:center;justify-content:center;gap:6px;padding:13px 16px;background:var(--part);color:#fff;border-radius:10px;font-size:14px;font-weight:700;font-family:var(--font);text-decoration:none;transition:opacity .15s;white-space:nowrap}
+.scall:hover{opacity:.85}
+
+#leg{position:absolute;bottom:20px;left:12px;z-index:1000;background:rgba(26,29,39,.95);border:1px solid var(--border);border-radius:10px;padding:8px 12px;backdrop-filter:blur(16px);font-size:11px;transition:bottom .3s cubic-bezier(.32,.72,0,1)}
 #leg.up{bottom:220px}
 .li{display:flex;align-items:center;gap:6px;padding:2px 0;color:var(--muted)}
 .ld{width:9px;height:9px;border-radius:50%;flex-shrink:0}
 
-/* REFRESH */
-#refresh{
-  position:absolute;bottom:20px;right:12px;z-index:1000;
-  background:rgba(26,29,39,.95);border:1px solid var(--border);
-  border-radius:50%;width:42px;height:42px;cursor:pointer;
-  display:flex;align-items:center;justify-content:center;font-size:18px;
-  backdrop-filter:blur(16px);transition:transform .3s;color:var(--muted)
-}
+#refresh{position:absolute;bottom:20px;right:12px;z-index:1000;background:rgba(26,29,39,.95);border:1px solid var(--border);border-radius:50%;width:42px;height:42px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;backdrop-filter:blur(16px);transition:transform .3s;color:var(--muted)}
 #refresh:hover{color:var(--text);transform:rotate(30deg)}
 #refresh.spinning{animation:spin .8s linear infinite}
 </style>
@@ -245,14 +135,10 @@ select.pill{
     <input id="sal-max" type="number" placeholder="Max" min="0" step="5000"/>
   </div>
   <button id="draw-btn" onclick="toggleDraw()">📦 Draw area</button>
-  <select class="fp" id="days-select" style="border-radius:20px">
-    <option value="1">Today</option>
-    <option value="3">3 days</option>
+  <select class="pill" id="days-select" style="margin-left:auto">
     <option value="7" selected>7 days</option>
-    <option value="14">14 days</option>
-    <option value="30">30 days</option>
   </select>
-  <div class="pill" style="margin-left:auto"><strong id="cv">0</strong>&nbsp;jobs</div>
+  <div class="pill"><strong id="cv">0</strong>&nbsp;jobs</div>
 </div>
 
 <button id="search-here" onclick="searchArea()">🔍 Search this area</button>
@@ -268,7 +154,10 @@ select.pill{
   </div>
   <div class="stags" id="s-tags"></div>
   <div class="sblurb" id="s-blurb"></div>
-  <a class="sapply" id="s-apply" href="#" target="_blank">Apply on Adzuna →</a>
+  <div class="sactions">
+    <a class="sapply" id="s-apply" href="#" target="_blank">Apply on Adzuna →</a>
+    <a class="scall" id="s-call" href="#" style="display:none">📞 Call</a>
+  </div>
 </div>
 
 <div id="leg">
@@ -284,7 +173,6 @@ const APP_ID  = 'f5d9cf06';
 const APP_KEY = '370bf1fcb104c08e81e3d18b6a8b2527';
 const WORKER  = 'https://little-bush-b0e3.nathanfrazer7.workers.dev';
 
-// ── MAP ──
 const map = L.map('map', {zoomControl: false}).setView([-33.82, 151.02], 11);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   attribution: '© OpenStreetMap', maxZoom: 19
@@ -294,10 +182,30 @@ L.control.zoom({position: 'bottomright'}).addTo(map);
 let allJobs = [], markers = [], activeFilter = 'all', activeMarkerEl = null;
 let lastSearchCenter = null;
 let drawMode = false, drawStart = null, drawRect = null, searchBounds = null;
-const sheet  = document.getElementById('sheet');
-const leg    = document.getElementById('leg');
-const shBtn  = document.getElementById('search-here');
-const hint   = document.getElementById('draw-hint');
+const sheet = document.getElementById('sheet');
+const leg   = document.getElementById('leg');
+const shBtn = document.getElementById('search-here');
+const hint  = document.getElementById('draw-hint');
+
+// ── PHONE NUMBER EXTRACTION ──
+function extractPhone(text) {
+  if (!text) return null;
+  // Match common Australian phone formats
+  const patterns = [
+    /(?:^|[\s\(])(\+?61[\s.-]?(?:4\d{2}|[23478])[\s.-]?\d{3,4}[\s.-]?\d{3,4})/g,
+    /(?:^|[\s\(])(0[234578]\d{1}[\s.-]?\d{4}[\s.-]?\d{4})/g,
+    /(?:^|[\s\(])(04\d{2}[\s.-]?\d{3}[\s.-]?\d{3})/g,
+    /(?:^|[\s\(])(1[38]00[\s.-]?\d{3}[\s.-]?\d{3})/g,
+  ];
+  for (const pattern of patterns) {
+    const match = text.match(pattern);
+    if (match) {
+      const num = match[0].trim().replace(/[^\d+]/g, '');
+      if (num.length >= 8) return num.startsWith('0') ? '+61' + num.slice(1) : num;
+    }
+  }
+  return null;
+}
 
 // ── TYPE HELPERS ──
 function tc(cat) {
@@ -323,8 +231,7 @@ function toggleDraw() {
   drawMode = !drawMode;
   const btn = document.getElementById('draw-btn');
   if (drawMode) {
-    btn.classList.add('active');
-    btn.textContent = '✕ Cancel draw';
+    btn.classList.add('active'); btn.textContent = '✕ Cancel draw';
     hint.classList.add('show');
     map.dragging.disable();
     map.getContainer().style.cursor = 'crosshair';
@@ -334,96 +241,75 @@ function toggleDraw() {
 }
 
 function cancelDraw() {
-  drawMode = false;
-  drawStart = null;
+  drawMode = false; drawStart = null;
   if (drawRect) { map.removeLayer(drawRect); drawRect = null; }
   const btn = document.getElementById('draw-btn');
-  btn.classList.remove('active');
-  btn.textContent = '📦 Draw area';
+  btn.classList.remove('active'); btn.textContent = '📦 Draw area';
   hint.classList.remove('show');
   map.dragging.enable();
   map.getContainer().style.cursor = '';
 }
 
-map.on('mousedown', e => {
-  if (!drawMode) return;
-  drawStart = e.latlng;
-  if (drawRect) { map.removeLayer(drawRect); drawRect = null; }
-});
-
+map.on('mousedown', e => { if (!drawMode) return; drawStart = e.latlng; if (drawRect) { map.removeLayer(drawRect); drawRect = null; } });
 map.on('mousemove', e => {
   if (!drawMode || !drawStart) return;
-  const bounds = L.latLngBounds(drawStart, e.latlng);
-  if (drawRect) {
-    drawRect.setBounds(bounds);
-  } else {
-    drawRect = L.rectangle(bounds, {
-      color: '#7c5ff5', weight: 2, fillColor: '#7c5ff5', fillOpacity: 0.1,
-      dashArray: '6,4'
-    }).addTo(map);
-  }
+  const b = L.latLngBounds(drawStart, e.latlng);
+  if (drawRect) drawRect.setBounds(b);
+  else drawRect = L.rectangle(b, {color:'#7c5ff5',weight:2,fillColor:'#7c5ff5',fillOpacity:0.1,dashArray:'6,4'}).addTo(map);
 });
-
 map.on('mouseup', async e => {
   if (!drawMode || !drawStart) return;
   const bounds = L.latLngBounds(drawStart, e.latlng);
-  if (bounds.getNorthEast().distanceTo(bounds.getSouthWest()) < 500) {
-    cancelDraw();
-    return;
-  }
+  if (bounds.getNorthEast().distanceTo(bounds.getSouthWest()) < 500) { cancelDraw(); return; }
   searchBounds = bounds;
   cancelDraw();
   if (drawRect) drawRect.setStyle({color:'#4f8ef7', fillColor:'#4f8ef7'});
   await searchByBounds(bounds);
 });
 
-// Touch support for draw
 let touchDrawing = false;
 map.getContainer().addEventListener('touchstart', e => {
-  if (!drawMode) return;
-  touchDrawing = true;
+  if (!drawMode) return; touchDrawing = true;
   const t = e.touches[0];
-  const latlng = map.containerPointToLatLng([t.clientX, t.clientY]);
-  drawStart = latlng;
+  drawStart = map.containerPointToLatLng([t.clientX, t.clientY]);
   e.preventDefault();
-}, {passive: false});
-
+}, {passive:false});
 map.getContainer().addEventListener('touchmove', e => {
   if (!drawMode || !touchDrawing || !drawStart) return;
   const t = e.touches[0];
-  const latlng = map.containerPointToLatLng([t.clientX - map.getContainer().getBoundingClientRect().left, t.clientY - map.getContainer().getBoundingClientRect().top]);
-  const bounds = L.latLngBounds(drawStart, latlng);
-  if (drawRect) { drawRect.setBounds(bounds); } 
-  else { drawRect = L.rectangle(bounds, {color:'#7c5ff5',weight:2,fillColor:'#7c5ff5',fillOpacity:0.1,dashArray:'6,4'}).addTo(map); }
+  const r = map.getContainer().getBoundingClientRect();
+  const ll = map.containerPointToLatLng([t.clientX - r.left, t.clientY - r.top]);
+  const b = L.latLngBounds(drawStart, ll);
+  if (drawRect) drawRect.setBounds(b);
+  else drawRect = L.rectangle(b, {color:'#7c5ff5',weight:2,fillColor:'#7c5ff5',fillOpacity:0.1,dashArray:'6,4'}).addTo(map);
   e.preventDefault();
-}, {passive: false});
-
+}, {passive:false});
 map.getContainer().addEventListener('touchend', async e => {
   if (!drawMode || !touchDrawing || !drawStart) return;
   touchDrawing = false;
   const t = e.changedTouches[0];
-  const latlng = map.containerPointToLatLng([t.clientX - map.getContainer().getBoundingClientRect().left, t.clientY - map.getContainer().getBoundingClientRect().top]);
-  const bounds = L.latLngBounds(drawStart, latlng);
-  searchBounds = bounds;
-  cancelDraw();
+  const r = map.getContainer().getBoundingClientRect();
+  const ll = map.containerPointToLatLng([t.clientX - r.left, t.clientY - r.top]);
+  const bounds = L.latLngBounds(drawStart, ll);
+  searchBounds = bounds; cancelDraw();
   await searchByBounds(bounds);
-}, {passive: false});
+}, {passive:false});
 
 // ── FETCH ──
 async function fetchJobsForArea(params) {
   const results = [];
-  // Remove page from params — it goes in the URL path only
   params.delete('page');
-  for (const page of [1, 2, 3, 4, 5]) {
+  for (const page of [1,2,3]) {
     const url = `${WORKER}/v1/api/jobs/au/search/${page}?${params}`;
     try {
-      const r = await fetch(url);
+      const r = await fetch(url, {signal: AbortSignal.timeout(12000)});
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
       const data = await r.json();
       document.getElementById('lsub').textContent = `Found ${results.length + (data.results?.length||0)} jobs…`;
       if (data.results?.length > 0) results.push(...data.results);
       else break;
     } catch(e) {
+      console.warn('Page', page, e.message);
       if (page === 1) throw e;
       break;
     }
@@ -438,41 +324,30 @@ async function fetchJobs(lat, lng, radiusKm, days, kw, salMin, salMax) {
     const gd = await geo.json();
     placeName = gd.address?.suburb || gd.address?.town || gd.address?.city_district || gd.address?.city || 'Sydney';
   } catch(e) {}
-
   document.getElementById('lsub').textContent = `Searching near ${placeName}…`;
-
   const params = new URLSearchParams({
-    app_id: APP_ID, app_key: APP_KEY,
-    results_per_page: 20,
-    where: placeName,
-    distance: radiusKm || 30,
-    max_days_old: days || 7,
-    sort_by: 'date',
+    app_id: APP_ID, app_key: APP_KEY, results_per_page: 20,
+    where: placeName, distance: radiusKm || 30, max_days_old: days || 7, sort_by: 'date',
   });
   if (kw) params.set('what', kw);
   if (salMin) params.set('salary_min', salMin);
   if (salMax) params.set('salary_max', salMax);
-
   return fetchJobsForArea(params);
 }
 
 async function searchByBounds(bounds) {
-  const days = parseInt(document.getElementById('days-select').value);
-  const kw   = document.getElementById('kw').value.trim() || undefined;
+  const days = 7;
+  const kw = document.getElementById('kw').value.trim() || undefined;
   const salMin = document.getElementById('sal-min').value || undefined;
   const salMax = document.getElementById('sal-max').value || undefined;
   const centre = bounds.getCenter();
-
-  // Use diagonal as radius to ensure full coverage, then clip to box after
   const radiusKm = Math.ceil(bounds.getNorthEast().distanceTo(bounds.getSouthWest()) / 1000);
-
   document.getElementById('loading').classList.remove('hide');
   document.getElementById('err').classList.remove('show');
   document.getElementById('refresh').classList.add('spinning');
   document.getElementById('lsub').textContent = `Searching selected area…`;
   shBtn.classList.remove('show');
   closeSheet();
-
   try {
     let placeName = 'Sydney';
     try {
@@ -480,44 +355,31 @@ async function searchByBounds(bounds) {
       const gd = await geo.json();
       placeName = gd.address?.suburb || gd.address?.town || gd.address?.city || 'Sydney';
     } catch(e) {}
-
     const params = new URLSearchParams({
-      app_id: APP_ID, app_key: APP_KEY,
-      results_per_page: 20,
-      where: placeName,
-      distance: Math.max(5, Math.min(60, radiusKm)),
-      max_days_old: days,
-      sort_by: 'date',
+      app_id: APP_ID, app_key: APP_KEY, results_per_page: 20,
+      where: placeName, distance: Math.max(5, Math.min(60, radiusKm)), max_days_old: days, sort_by: 'date',
     });
     if (kw) params.set('what', kw);
     if (salMin) params.set('salary_min', salMin);
     if (salMax) params.set('salary_max', salMax);
-
     const raw = await fetchJobsForArea(params);
-
-    // Strictly clip to drawn bounding box
     const clipped = raw.filter(j => {
-      if (!j.latitude || !j.longitude) return true; // keep jobs with no coords (they get jittered to centre)
+      if (!j.latitude || !j.longitude) return true;
       return bounds.contains([parseFloat(j.latitude), parseFloat(j.longitude)]);
     });
-
     processResults(clipped, centre, bounds);
-  } catch(e) {
-    showErr('Could not load jobs. Try again.');
-  }
-
+  } catch(e) { showErr('Could not load jobs. Try again.'); }
   document.getElementById('loading').classList.add('hide');
   document.getElementById('refresh').classList.remove('spinning');
 }
 
 function processResults(raw, centre, bounds) {
   allJobs = raw.map(j => {
-    let lat = j.latitude  ? parseFloat(j.latitude)  : centre.lat;
+    let lat = j.latitude ? parseFloat(j.latitude) : centre.lat;
     let lng = j.longitude ? parseFloat(j.longitude) : centre.lng;
-    // If we have a bounds box, jitter only keeps pins inside it
     if (bounds && (!j.latitude || !j.longitude)) {
       lat = bounds.getSouth() + Math.random() * (bounds.getNorth() - bounds.getSouth());
-      lng = bounds.getWest()  + Math.random() * (bounds.getEast()  - bounds.getWest());
+      lng = bounds.getWest() + Math.random() * (bounds.getEast() - bounds.getWest());
     }
     return { ...j, _lat: jitter(lat, 0.003), _lng: jitter(lng, 0.003), _tc: tc(j.contract_time || j.contract_type || '') };
   });
@@ -531,13 +393,11 @@ function render() {
   markers.forEach(m => map.removeLayer(m)); markers = [];
   const kw = document.getElementById('kw').value.trim().toLowerCase();
   const typeMap = {full_time:'f', contract:'c', part_time:'p'};
-
   const visible = allJobs.filter(j => {
     if (activeFilter !== 'all' && j._tc !== typeMap[activeFilter]) return false;
     if (kw && !`${j.title} ${j.company?.display_name||''} ${j.description||''} ${j.location?.display_name||''}`.toLowerCase().includes(kw)) return false;
     return true;
   });
-
   document.getElementById('cv').textContent = visible.length;
   visible.forEach(job => {
     const el = document.createElement('div');
@@ -554,7 +414,6 @@ function openSheet(job, mk) {
   if (activeMarkerEl) activeMarkerEl.classList.remove('active');
   const el = mk.getElement()?.querySelector('.mp');
   if (el) { el.classList.add('active'); activeMarkerEl = el; }
-
   const t = job._tc;
   document.getElementById('s-icon').textContent = emoji(job.company?.display_name);
   document.getElementById('s-title').textContent = job.title;
@@ -562,25 +421,29 @@ function openSheet(job, mk) {
   document.getElementById('s-blurb').textContent = job.description || 'No description available.';
   document.getElementById('s-apply').href = job.redirect_url || job.url || '#';
 
-  let salStr = '';
-  if (job.salary_min && job.salary_max) {
-    salStr = `$${Math.round(job.salary_min).toLocaleString()} – $${Math.round(job.salary_max).toLocaleString()}`;
-  } else if (job.salary_min) {
-    salStr = `From $${Math.round(job.salary_min).toLocaleString()}`;
+  // Phone number
+  const phone = extractPhone(job.description);
+  const callBtn = document.getElementById('s-call');
+  if (phone) {
+    callBtn.href = `tel:${phone}`;
+    callBtn.style.display = 'flex';
+  } else {
+    callBtn.style.display = 'none';
   }
 
+  let salStr = '';
+  if (job.salary_min && job.salary_max) salStr = `$${Math.round(job.salary_min).toLocaleString()} – $${Math.round(job.salary_max).toLocaleString()}`;
+  else if (job.salary_min) salStr = `From $${Math.round(job.salary_min).toLocaleString()}`;
   let posted = '';
   if (job.created) {
     const diff = Math.round((Date.now() - new Date(job.created)) / 86400000);
     posted = diff === 0 ? 'Today' : diff === 1 ? 'Yesterday' : `${diff}d ago`;
   }
-
   let tags = `<span class="stag ${typeCls(t)}">${typeLabel(t)}</span>`;
   if (salStr) tags += `<span class="stag ts">${salStr}</span>`;
   if (job.location?.display_name) tags += `<span class="stag tg">📍 ${job.location.display_name}</span>`;
   if (posted) tags += `<span class="stag tg">📅 ${posted}</span>`;
   document.getElementById('s-tags').innerHTML = tags;
-
   sheet.classList.add('open'); leg.classList.add('up');
 }
 
@@ -596,44 +459,23 @@ document.getElementById('drag').addEventListener('click', closeSheet);
 async function searchArea() {
   if (drawRect) { map.removeLayer(drawRect); drawRect = null; }
   const centre = map.getCenter();
+  lastSearchCenter = centre;
   const zoom = map.getZoom();
   const radius = Math.round(40000 / Math.pow(2, zoom - 8));
-  // Minimum 10km so zoomed-in views still get results
   const clampedRadius = Math.max(10, Math.min(50, radius));
-  const days   = parseInt(document.getElementById('days-select').value);
-  const kw     = document.getElementById('kw').value.trim() || undefined;
+  const days = 7;
+  const kw = document.getElementById('kw').value.trim() || undefined;
   const salMin = document.getElementById('sal-min').value || undefined;
   const salMax = document.getElementById('sal-max').value || undefined;
-
   document.getElementById('loading').classList.remove('hide');
   document.getElementById('err').classList.remove('show');
   document.getElementById('refresh').classList.add('spinning');
   shBtn.classList.remove('show');
   closeSheet();
-
   try {
-    let raw = await fetchJobs(centre.lat, centre.lng, clampedRadius, days, kw, salMin, salMax);
-
-    // Auto-retry with wider radius if no results
-    if (raw.length === 0 && clampedRadius < 40) {
-      document.getElementById('lsub').textContent = 'No results — widening search…';
-      raw = await fetchJobs(centre.lat, centre.lng, 40, days, kw, salMin, salMax);
-    }
-
-    // Auto-retry with more days if still nothing
-    if (raw.length === 0 && days <= 7) {
-      document.getElementById('lsub').textContent = 'Still nothing — trying last 30 days…';
-      raw = await fetchJobs(centre.lat, centre.lng, 40, 30, kw, salMin, salMax);
-      if (raw.length > 0) {
-        showInfo('No recent results — showing last 30 days instead');
-      }
-    }
-
+    const raw = await fetchJobs(centre.lat, centre.lng, clampedRadius, days, kw, salMin, salMax);
     processResults(raw, centre);
-  } catch(e) {
-    showErr('Could not load jobs. Try again.');
-  }
-
+  } catch(e) { showErr('Could not load jobs. Try again.'); }
   document.getElementById('loading').classList.add('hide');
   document.getElementById('refresh').classList.remove('spinning');
 }
@@ -644,51 +486,26 @@ function showErr(msg) {
   setTimeout(() => el.classList.remove('show'), 6000);
 }
 
-function showInfo(msg) {
-  const el = document.getElementById('err');
-  el.textContent = msg;
-  el.style.background = '#7c5ff5';
-  el.classList.add('show');
-  setTimeout(() => { el.classList.remove('show'); el.style.background = ''; }, 5000);
-}
-
 map.on('moveend zoomend', () => {
   if (!lastSearchCenter) return;
   const c = map.getCenter();
-  if (map.distance([c.lat, c.lng], [lastSearchCenter.lat, lastSearchCenter.lng]) > 3000) {
-    shBtn.classList.add('show');
-  }
+  if (map.distance([c.lat, c.lng], [lastSearchCenter.lat, lastSearchCenter.lng]) > 3000) shBtn.classList.add('show');
   render();
 });
 
 document.querySelectorAll('.fp').forEach(b => {
   b.addEventListener('click', () => {
     document.querySelectorAll('.fp').forEach(x => x.classList.remove('on'));
-    b.classList.add('on');
-    activeFilter = b.dataset.f;
-    render();
+    b.classList.add('on'); activeFilter = b.dataset.f; render();
   });
 });
 
 let kt;
 document.getElementById('kw').addEventListener('input', () => {
-  clearTimeout(kt); kt = setTimeout(() => {
-    lastSearchCenter = map.getCenter();
-    searchArea();
-  }, 600);
+  clearTimeout(kt); kt = setTimeout(() => { lastSearchCenter = map.getCenter(); searchArea(); }, 600);
 });
-
-document.getElementById('days-select').addEventListener('change', () => {
-  lastSearchCenter = map.getCenter();
-  searchArea();
-});
-
-// Salary inputs — re-search on change
 ['sal-min','sal-max'].forEach(id => {
-  document.getElementById(id).addEventListener('change', () => {
-    lastSearchCenter = map.getCenter();
-    searchArea();
-  });
+  document.getElementById(id).addEventListener('change', () => { lastSearchCenter = map.getCenter(); searchArea(); });
 });
 
 searchArea();
