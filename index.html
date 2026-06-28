@@ -430,7 +430,7 @@ function closeSheet() {
 async function searchBounds(bounds) {
   if (loading) return;
   loading = true;
-  pool = []; // clear all existing jobs — fresh search only
+  pool = [];
   markers.forEach(m => map.removeLayer(m)); markers = [];
   document.getElementById('cv').textContent = '0';
 
@@ -443,27 +443,21 @@ async function searchBounds(bounds) {
   const kw     = document.getElementById('kw').value.trim() || undefined;
   const salMin = document.getElementById('sal-min').value || undefined;
   const salMax = document.getElementById('sal-max').value || undefined;
+  const centre = bounds.getCenter();
 
-  // Use centre + radius of the drawn box
-  const centre  = bounds.getCenter();
-  const radiusM = bounds.getNorthEast().distanceTo(bounds.getSouthWest()) / 2;
-  const radiusKm = Math.max(5, Math.min(60, Math.round(radiusM / 1000)));
+  // Calculate km radius from box diagonal
+  const radiusKm = Math.max(5, Math.min(50, Math.round(
+    bounds.getNorthEast().distanceTo(bounds.getSouthWest()) / 1500
+  )));
 
-  // Reverse geocode centre to get a place name for Adzuna
-  let where = 'Sydney';
-  try {
-    const geo = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${centre.lat}&lon=${centre.lng}&format=json`);
-    const gd  = await geo.json();
-    where = gd.address?.suburb || gd.address?.town || gd.address?.city || 'Sydney';
-  } catch(e) {}
+  lsub.textContent = `Searching selected area…`;
 
-  lsub.textContent = `Searching ${where} area…`;
-
+  // Use Sydney as anchor with radius — more reliable than reverse geocoding
   const base = new URLSearchParams({
     app_id: APP_ID, app_key: APP_KEY,
     results_per_page: 20,
-    where,
-    distance: radiusKm,
+    where: 'Sydney',
+    distance: 50,
     max_days_old: days,
     sort_by: 'date',
   });
@@ -472,7 +466,7 @@ async function searchBounds(bounds) {
   if (salMax) base.set('salary_max', salMax);
 
   const seen = new Set();
-  for (const page of [1,2,3]) {
+  for (const page of [1,2,3,4,5]) {
     try {
       base.delete('page');
       const url = `${WORKER}/v1/api/jobs/au/search/${page}?${base}`;
@@ -481,11 +475,16 @@ async function searchBounds(bounds) {
       const data = await r.json();
       if (!data.results?.length) break;
       for (const j of data.results) {
-        if (seen.has(j.id) || !j.latitude || !j.longitude) continue;
+        if (seen.has(j.id)) continue;
+        if (!j.latitude || !j.longitude) continue;
+        // Only keep jobs whose coords fall inside the drawn box
+        const lat = parseFloat(j.latitude);
+        const lng = parseFloat(j.longitude);
+        if (!bounds.contains([lat, lng])) continue;
         seen.add(j.id);
-        pool.push({...j, _tc:typeCode(j), _lat:parseFloat(j.latitude), _lng:parseFloat(j.longitude)});
+        pool.push({...j, _tc:typeCode(j), _lat:lat, _lng:lng});
       }
-      lsub.textContent = `Found ${pool.length} jobs…`;
+      lsub.textContent = `Found ${pool.length} jobs in area…`;
     } catch(e) { break; }
   }
 
@@ -493,125 +492,8 @@ async function searchBounds(bounds) {
   refBtn.classList.remove('spin');
   loading = false;
 
-  if (pool.length === 0) showErr('No jobs found in this area. Try a larger box or different date range.');
+  if (pool.length === 0) showErr('No located jobs found in this box. Try a larger area.');
   render();
 }
 
-function clearBox() {
-  drawnBounds = null;
-  if (drawRect) { map.removeLayer(drawRect); drawRect = null; }
-  document.getElementById('clear-box').style.display = 'none';
-  render();
-}
 
-function showErr(msg) {
-  errEl.textContent = msg;
-  errEl.classList.add('show');
-  setTimeout(()=>errEl.classList.remove('show'), 5000);
-}
-
-// ── DRAW MODE ──
-function toggleDraw() {
-  drawMode = !drawMode;
-  const btn = document.getElementById('draw-btn');
-  const hint = document.getElementById('draw-hint');
-  if (drawMode) {
-    btn.classList.add('draw-on'); btn.textContent='✕ Cancel';
-    hint.classList.add('show');
-    map.dragging.disable();
-    map.getContainer().style.cursor='crosshair';
-    // Clear previous drawn box
-    drawnBounds = null;
-    if (drawRect) { map.removeLayer(drawRect); drawRect = null; }
-  } else {
-    btn.classList.remove('draw-on'); btn.textContent='📦 Draw area';
-    hint.classList.remove('show');
-    map.dragging.enable();
-    map.getContainer().style.cursor='';
-    drawStart = null;
-  }
-}
-
-map.on('mousedown', e => {
-  if (!drawMode) return;
-  drawStart = e.latlng;
-  if (drawRect) { map.removeLayer(drawRect); drawRect = null; }
-});
-map.on('mousemove', e => {
-  if (!drawMode || !drawStart) return;
-  const b = L.latLngBounds(drawStart, e.latlng);
-  if (drawRect) drawRect.setBounds(b);
-  else drawRect = L.rectangle(b,{color:'#7c5ff5',weight:2,fillColor:'#7c5ff5',fillOpacity:0.1,dashArray:'6,4'}).addTo(map);
-});
-map.on('mouseup', e => {
-  if (!drawMode || !drawStart) return;
-  drawnBounds = L.latLngBounds(drawStart, e.latlng);
-  if (drawRect) drawRect.setStyle({color:'#4f8ef7',fillColor:'#4f8ef7',fillOpacity:0.08});
-  toggleDraw();
-  searchBounds(drawnBounds);
-});
-
-// Touch draw
-function mapLatLng(clientX, clientY) {
-  const r = map.getContainer().getBoundingClientRect();
-  return map.containerPointToLatLng([clientX-r.left, clientY-r.top]);
-}
-let touching = false;
-map.getContainer().addEventListener('touchstart', e=>{
-  if (!drawMode) return;
-  touching = true;
-  drawStart = mapLatLng(e.touches[0].clientX, e.touches[0].clientY);
-  if (drawRect){map.removeLayer(drawRect);drawRect=null;}
-  e.preventDefault();
-},{passive:false});
-map.getContainer().addEventListener('touchmove', e=>{
-  if (!drawMode||!touching||!drawStart) return;
-  const ll = mapLatLng(e.touches[0].clientX, e.touches[0].clientY);
-  const b = L.latLngBounds(drawStart, ll);
-  if (drawRect) drawRect.setBounds(b);
-  else drawRect = L.rectangle(b,{color:'#7c5ff5',weight:2,fillColor:'#7c5ff5',fillOpacity:0.1,dashArray:'6,4'}).addTo(map);
-  e.preventDefault();
-},{passive:false});
-map.getContainer().addEventListener('touchend', e=>{
-  if (!drawMode||!touching||!drawStart) return;
-  touching = false;
-  const ll = mapLatLng(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
-  drawnBounds = L.latLngBounds(drawStart, ll);
-  if (drawRect) drawRect.setStyle({color:'#4f8ef7',fillColor:'#4f8ef7',fillOpacity:0.08});
-  toggleDraw();
-  searchBounds(drawnBounds);
-},{passive:false});
-
-// ── MAP / FILTER EVENTS ──
-map.on('click', ()=>{ if(!drawMode) closeSheet(); });
-document.getElementById('drag').addEventListener('click', closeSheet);
-
-// Re-render on pan/zoom
-map.on('moveend zoomend', ()=>{
-  render(); // render always respects drawnBounds if set, otherwise uses map view
-});
-
-// Drawn box persists until user draws a new one or clicks refresh
-
-document.querySelectorAll('.fp[data-f]').forEach(b=>{
-  b.addEventListener('click',()=>{
-    document.querySelectorAll('.fp[data-f]').forEach(x=>x.classList.remove('on'));
-    b.classList.add('on');
-    activeFilter = b.dataset.f;
-    render();
-  });
-});
-
-// Keyword and salary filter client-side (no new fetch needed)
-document.getElementById('kw').addEventListener('input', ()=>{ clearTimeout(window._kt); window._kt=setTimeout(render,300); });
-document.getElementById('sal-min').addEventListener('change', render);
-document.getElementById('sal-max').addEventListener('change', render);
-
-// Days change = reload pool from API
-document.getElementById('days').addEventListener('change', reloadPool);
-
-// Initial load
-reloadPool();
-</script>
-</body>
-</html>
