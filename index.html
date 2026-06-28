@@ -427,6 +427,74 @@ function closeSheet() {
   if (activeMarkerEl) { activeMarkerEl.classList.remove('active'); activeMarkerEl = null; }
 }
 
+async function searchBounds(bounds) {
+  if (loading) return;
+  loading = true;
+  pool = [];
+
+  loadEl.classList.remove('hide');
+  errEl.classList.remove('show');
+  refBtn.classList.add('spin');
+  closeSheet();
+
+  const days   = document.getElementById('days').value;
+  const kw     = document.getElementById('kw').value.trim() || undefined;
+  const salMin = document.getElementById('sal-min').value || undefined;
+  const salMax = document.getElementById('sal-max').value || undefined;
+
+  // Use centre + radius of the drawn box
+  const centre  = bounds.getCenter();
+  const radiusM = bounds.getNorthEast().distanceTo(bounds.getSouthWest()) / 2;
+  const radiusKm = Math.max(5, Math.min(60, Math.round(radiusM / 1000)));
+
+  // Reverse geocode centre to get a place name for Adzuna
+  let where = 'Sydney';
+  try {
+    const geo = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${centre.lat}&lon=${centre.lng}&format=json`);
+    const gd  = await geo.json();
+    where = gd.address?.suburb || gd.address?.town || gd.address?.city || 'Sydney';
+  } catch(e) {}
+
+  lsub.textContent = `Searching ${where} area…`;
+
+  const base = new URLSearchParams({
+    app_id: APP_ID, app_key: APP_KEY,
+    results_per_page: 20,
+    where,
+    distance: radiusKm,
+    max_days_old: days,
+    sort_by: 'date',
+  });
+  if (kw) base.set('what', kw);
+  if (salMin) base.set('salary_min', salMin);
+  if (salMax) base.set('salary_max', salMax);
+
+  const seen = new Set();
+  for (const page of [1,2,3]) {
+    try {
+      base.delete('page');
+      const url = `${WORKER}/v1/api/jobs/au/search/${page}?${base}`;
+      const r = await fetch(url, {signal: AbortSignal.timeout(10000)});
+      if (!r.ok) break;
+      const data = await r.json();
+      if (!data.results?.length) break;
+      for (const j of data.results) {
+        if (seen.has(j.id) || !j.latitude || !j.longitude) continue;
+        seen.add(j.id);
+        pool.push({...j, _tc:typeCode(j), _lat:parseFloat(j.latitude), _lng:parseFloat(j.longitude)});
+      }
+      lsub.textContent = `Found ${pool.length} jobs…`;
+    } catch(e) { break; }
+  }
+
+  loadEl.classList.add('hide');
+  refBtn.classList.remove('spin');
+  loading = false;
+
+  if (pool.length === 0) showErr('No jobs found in this area. Try a larger box or different date range.');
+  render();
+}
+
 function clearBox() {
   drawnBounds = null;
   if (drawRect) { map.removeLayer(drawRect); drawRect = null; }
@@ -478,7 +546,7 @@ map.on('mouseup', e => {
   drawnBounds = L.latLngBounds(drawStart, e.latlng);
   if (drawRect) drawRect.setStyle({color:'#4f8ef7',fillColor:'#4f8ef7',fillOpacity:0.08});
   toggleDraw();
-  render();
+  searchBounds(drawnBounds);
 });
 
 // Touch draw
@@ -509,7 +577,7 @@ map.getContainer().addEventListener('touchend', e=>{
   drawnBounds = L.latLngBounds(drawStart, ll);
   if (drawRect) drawRect.setStyle({color:'#4f8ef7',fillColor:'#4f8ef7',fillOpacity:0.08});
   toggleDraw();
-  render();
+  searchBounds(drawnBounds);
 },{passive:false});
 
 // ── MAP / FILTER EVENTS ──
