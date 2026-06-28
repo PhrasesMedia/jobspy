@@ -430,27 +430,18 @@ async function fetchJobsForArea(params) {
 }
 
 async function fetchJobs(lat, lng, radiusKm, days, kw, salMin, salMax) {
-  let placeName = 'Sydney';
-  try {
-    const geo = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`);
-    const gd = await geo.json();
-    placeName = gd.address?.suburb || gd.address?.town || gd.address?.city_district || gd.address?.city || 'Sydney';
-  } catch(e) {}
-
-  document.getElementById('lsub').textContent = `Searching near ${placeName}…`;
-
   const params = new URLSearchParams({
     app_id: APP_ID, app_key: APP_KEY,
     results_per_page: 20,
-    where: placeName,
-    distance: radiusKm || 30,
+    where: 'Sydney',
+    distance: Math.max(10, Math.min(60, radiusKm || 30)),
     max_days_old: days || 7,
     sort_by: 'date',
   });
   if (kw) params.set('what', kw);
   if (salMin) params.set('salary_min', salMin);
   if (salMax) params.set('salary_max', salMax);
-
+  document.getElementById('lsub').textContent = `Searching within ${radiusKm || 30}km…`;
   return fetchJobsForArea(params);
 }
 
@@ -460,8 +451,6 @@ async function searchByBounds(bounds) {
   const salMin = document.getElementById('sal-min').value || undefined;
   const salMax = document.getElementById('sal-max').value || undefined;
   const centre = bounds.getCenter();
-
-  // Use diagonal as radius to ensure full coverage, then clip to box after
   const radiusKm = Math.ceil(bounds.getNorthEast().distanceTo(bounds.getSouthWest()) / 1000);
 
   document.getElementById('loading').classList.remove('hide');
@@ -472,18 +461,11 @@ async function searchByBounds(bounds) {
   closeSheet();
 
   try {
-    let placeName = 'Sydney';
-    try {
-      const geo = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${centre.lat}&lon=${centre.lng}&format=json`);
-      const gd = await geo.json();
-      placeName = gd.address?.suburb || gd.address?.town || gd.address?.city || 'Sydney';
-    } catch(e) {}
-
     const params = new URLSearchParams({
       app_id: APP_ID, app_key: APP_KEY,
       results_per_page: 20,
-      where: placeName,
-      distance: Math.max(5, Math.min(60, radiusKm)),
+      where: 'Sydney',
+      distance: Math.max(10, Math.min(60, radiusKm)),
       max_days_old: days,
       sort_by: 'date',
     });
@@ -493,9 +475,9 @@ async function searchByBounds(bounds) {
 
     const raw = await fetchJobsForArea(params);
 
-    // Strictly clip to drawn bounding box
+    // Clip strictly to drawn box
     const clipped = raw.filter(j => {
-      if (!j.latitude || !j.longitude) return true; // keep jobs with no coords (they get jittered to centre)
+      if (!j.latitude || !j.longitude) return true;
       return bounds.contains([parseFloat(j.latitude), parseFloat(j.longitude)]);
     });
 
@@ -508,191 +490,4 @@ async function searchByBounds(bounds) {
   document.getElementById('refresh').classList.remove('spinning');
 }
 
-function processResults(raw, centre, bounds) {
-  allJobs = raw.map(j => {
-    let lat = j.latitude  ? parseFloat(j.latitude)  : centre.lat;
-    let lng = j.longitude ? parseFloat(j.longitude) : centre.lng;
-    // If we have a bounds box, jitter only keeps pins inside it
-    if (bounds && (!j.latitude || !j.longitude)) {
-      lat = bounds.getSouth() + Math.random() * (bounds.getNorth() - bounds.getSouth());
-      lng = bounds.getWest()  + Math.random() * (bounds.getEast()  - bounds.getWest());
-    }
-    return { ...j, _lat: jitter(lat, 0.003), _lng: jitter(lng, 0.003), _tc: tc(j.contract_time || j.contract_type || '') };
-  });
-  lastSearchCenter = centre;
-  render();
-  if (allJobs.length === 0) showErr('No jobs found. Try expanding the area or changing filters.');
-}
 
-// ── RENDER ──
-function render() {
-  markers.forEach(m => map.removeLayer(m)); markers = [];
-  const kw = document.getElementById('kw').value.trim().toLowerCase();
-  const typeMap = {full_time:'f', contract:'c', part_time:'p'};
-
-  const visible = allJobs.filter(j => {
-    if (activeFilter !== 'all' && j._tc !== typeMap[activeFilter]) return false;
-    if (kw && !`${j.title} ${j.company?.display_name||''} ${j.description||''} ${j.location?.display_name||''}`.toLowerCase().includes(kw)) return false;
-    return true;
-  });
-
-  document.getElementById('cv').textContent = visible.length;
-  visible.forEach(job => {
-    const el = document.createElement('div');
-    el.className = `mp ${job._tc}`;
-    const icon = L.divIcon({html: el.outerHTML, className:'', iconSize:[26,26], iconAnchor:[13,13]});
-    const mk = L.marker([job._lat, job._lng], {icon, zIndexOffset:100}).addTo(map);
-    mk.on('click', e => { L.DomEvent.stopPropagation(e); openSheet(job, mk); });
-    markers.push(mk);
-  });
-}
-
-// ── SHEET ──
-function openSheet(job, mk) {
-  if (activeMarkerEl) activeMarkerEl.classList.remove('active');
-  const el = mk.getElement()?.querySelector('.mp');
-  if (el) { el.classList.add('active'); activeMarkerEl = el; }
-
-  const t = job._tc;
-  document.getElementById('s-icon').textContent = emoji(job.company?.display_name);
-  document.getElementById('s-title').textContent = job.title;
-  document.getElementById('s-company').textContent = job.company?.display_name || 'Company not listed';
-  document.getElementById('s-blurb').textContent = job.description || 'No description available.';
-  document.getElementById('s-apply').href = job.redirect_url || job.url || '#';
-
-  let salStr = '';
-  if (job.salary_min && job.salary_max) {
-    salStr = `$${Math.round(job.salary_min).toLocaleString()} – $${Math.round(job.salary_max).toLocaleString()}`;
-  } else if (job.salary_min) {
-    salStr = `From $${Math.round(job.salary_min).toLocaleString()}`;
-  }
-
-  let posted = '';
-  if (job.created) {
-    const diff = Math.round((Date.now() - new Date(job.created)) / 86400000);
-    posted = diff === 0 ? 'Today' : diff === 1 ? 'Yesterday' : `${diff}d ago`;
-  }
-
-  let tags = `<span class="stag ${typeCls(t)}">${typeLabel(t)}</span>`;
-  if (salStr) tags += `<span class="stag ts">${salStr}</span>`;
-  if (job.location?.display_name) tags += `<span class="stag tg">📍 ${job.location.display_name}</span>`;
-  if (posted) tags += `<span class="stag tg">📅 ${posted}</span>`;
-  document.getElementById('s-tags').innerHTML = tags;
-
-  sheet.classList.add('open'); leg.classList.add('up');
-}
-
-function closeSheet() {
-  sheet.classList.remove('open'); leg.classList.remove('up');
-  if (activeMarkerEl) { activeMarkerEl.classList.remove('active'); activeMarkerEl = null; }
-}
-
-map.on('click', e => { if (!drawMode) closeSheet(); });
-document.getElementById('drag').addEventListener('click', closeSheet);
-
-// ── SEARCH AREA ──
-async function searchArea() {
-  if (drawRect) { map.removeLayer(drawRect); drawRect = null; }
-  const centre = map.getCenter(); // always use current map centre
-  lastSearchCenter = centre;
-  const zoom = map.getZoom();
-  const radius = Math.round(40000 / Math.pow(2, zoom - 8));
-  // Minimum 10km so zoomed-in views still get results
-  const clampedRadius = Math.max(10, Math.min(50, radius));
-  const days   = parseInt(document.getElementById('days-select').value);
-  const kw     = document.getElementById('kw').value.trim() || undefined;
-  const salMin = document.getElementById('sal-min').value || undefined;
-  const salMax = document.getElementById('sal-max').value || undefined;
-
-  document.getElementById('loading').classList.remove('hide');
-  document.getElementById('err').classList.remove('show');
-  document.getElementById('refresh').classList.add('spinning');
-  shBtn.classList.remove('show');
-  closeSheet();
-
-  try {
-    let raw = await fetchJobs(centre.lat, centre.lng, clampedRadius, days, kw, salMin, salMax);
-
-    // Auto-retry with wider radius if no results
-    if (raw.length === 0 && clampedRadius < 40) {
-      document.getElementById('lsub').textContent = 'No results — widening search…';
-      raw = await fetchJobs(centre.lat, centre.lng, 40, days, kw, salMin, salMax);
-    }
-
-    // Auto-retry with more days if still nothing
-    if (raw.length === 0 && days <= 7) {
-      document.getElementById('lsub').textContent = 'Still nothing — trying last 30 days…';
-      raw = await fetchJobs(centre.lat, centre.lng, 40, 30, kw, salMin, salMax);
-      if (raw.length > 0) {
-        showInfo('No recent results — showing last 30 days instead');
-      }
-    }
-
-    processResults(raw, centre);
-  } catch(e) {
-    showErr('Could not load jobs. Try again.');
-  }
-
-  document.getElementById('loading').classList.add('hide');
-  document.getElementById('refresh').classList.remove('spinning');
-}
-
-function showErr(msg) {
-  const el = document.getElementById('err');
-  el.textContent = msg; el.classList.add('show');
-  setTimeout(() => el.classList.remove('show'), 6000);
-}
-
-function showInfo(msg) {
-  const el = document.getElementById('err');
-  el.textContent = msg;
-  el.style.background = '#7c5ff5';
-  el.classList.add('show');
-  setTimeout(() => { el.classList.remove('show'); el.style.background = ''; }, 5000);
-}
-
-map.on('moveend zoomend', () => {
-  if (!lastSearchCenter) return;
-  const c = map.getCenter();
-  if (map.distance([c.lat, c.lng], [lastSearchCenter.lat, lastSearchCenter.lng]) > 3000) {
-    shBtn.classList.add('show');
-  }
-  render();
-});
-
-document.querySelectorAll('.fp').forEach(b => {
-  b.addEventListener('click', () => {
-    document.querySelectorAll('.fp').forEach(x => x.classList.remove('on'));
-    b.classList.add('on');
-    activeFilter = b.dataset.f;
-    render();
-  });
-});
-
-let kt;
-document.getElementById('kw').addEventListener('input', () => {
-  clearTimeout(kt); kt = setTimeout(() => {
-    lastSearchCenter = map.getCenter();
-    searchArea();
-  }, 600);
-});
-
-let daysTimer;
-document.getElementById('days-select').addEventListener('change', () => {
-  clearTimeout(daysTimer);
-  lastSearchCenter = null; // force fresh geocode
-  daysTimer = setTimeout(() => searchArea(), 100);
-});
-
-// Salary inputs — re-search on change
-['sal-min','sal-max'].forEach(id => {
-  document.getElementById(id).addEventListener('change', () => {
-    lastSearchCenter = map.getCenter();
-    searchArea();
-  });
-});
-
-searchArea();
-</script>
-</body>
-</html>
