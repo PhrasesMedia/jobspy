@@ -410,18 +410,18 @@ map.getContainer().addEventListener('touchend', async e => {
 // ── FETCH ──
 async function fetchJobsForArea(params) {
   const results = [];
-  // Remove page from params — it goes in the URL path only
   params.delete('page');
-  for (const page of [1, 2, 3, 4, 5]) {
+  for (const page of [1, 2, 3]) {
     const url = `${WORKER}/v1/api/jobs/au/search/${page}?${params}`;
     try {
-      const r = await fetch(url);
+      const r = await fetch(url, { signal: AbortSignal.timeout(10000) });
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
       const data = await r.json();
       document.getElementById('lsub').textContent = `Found ${results.length + (data.results?.length||0)} jobs…`;
       if (data.results?.length > 0) results.push(...data.results);
       else break;
     } catch(e) {
+      console.warn('Page', page, 'failed:', e.message);
       if (page === 1) throw e;
       break;
     }
@@ -489,5 +489,157 @@ async function searchByBounds(bounds) {
   document.getElementById('loading').classList.add('hide');
   document.getElementById('refresh').classList.remove('spinning');
 }
+// ── PROCESS RESULTS ──
+function processResults(raw, centre, bounds) {
+  allJobs = raw.map(j => {
+    let lat = j.latitude  ? parseFloat(j.latitude)  : centre.lat;
+    let lng = j.longitude ? parseFloat(j.longitude) : centre.lng;
+    if (bounds && (!j.latitude || !j.longitude)) {
+      lat = bounds.getSouth() + Math.random() * (bounds.getNorth() - bounds.getSouth());
+      lng = bounds.getWest()  + Math.random() * (bounds.getEast()  - bounds.getWest());
+    }
+    return { ...j, _lat: jitter(lat, 0.003), _lng: jitter(lng, 0.003), _tc: tc(j.contract_time || j.contract_type || '') };
+  });
+  lastSearchCenter = centre;
+  render();
+  if (allJobs.length === 0) showErr('No jobs found. Try zooming out or changing filters.');
+}
 
+// ── RENDER ──
+function render() {
+  markers.forEach(m => map.removeLayer(m)); markers = [];
+  const kw = document.getElementById('kw').value.trim().toLowerCase();
+  const typeMap = {full_time:'f', contract:'c', part_time:'p'};
+  const visible = allJobs.filter(j => {
+    if (activeFilter !== 'all' && j._tc !== typeMap[activeFilter]) return false;
+    if (kw && !`${j.title} ${j.company?.display_name||''} ${j.description||''} ${j.location?.display_name||''}`.toLowerCase().includes(kw)) return false;
+    return true;
+  });
+  document.getElementById('cv').textContent = visible.length;
+  visible.forEach(job => {
+    const el = document.createElement('div');
+    el.className = `mp ${job._tc}`;
+    const icon = L.divIcon({html: el.outerHTML, className:'', iconSize:[26,26], iconAnchor:[13,13]});
+    const mk = L.marker([job._lat, job._lng], {icon, zIndexOffset:100}).addTo(map);
+    mk.on('click', e => { L.DomEvent.stopPropagation(e); openSheet(job, mk); });
+    markers.push(mk);
+  });
+}
 
+// ── SHEET ──
+function openSheet(job, mk) {
+  if (activeMarkerEl) activeMarkerEl.classList.remove('active');
+  const el = mk.getElement()?.querySelector('.mp');
+  if (el) { el.classList.add('active'); activeMarkerEl = el; }
+  const t = job._tc;
+  document.getElementById('s-icon').textContent = emoji(job.company?.display_name);
+  document.getElementById('s-title').textContent = job.title;
+  document.getElementById('s-company').textContent = job.company?.display_name || 'Company not listed';
+  document.getElementById('s-blurb').textContent = job.description || 'No description available.';
+  document.getElementById('s-apply').href = job.redirect_url || job.url || '#';
+  let salStr = '';
+  if (job.salary_min && job.salary_max) salStr = `$${Math.round(job.salary_min).toLocaleString()} – $${Math.round(job.salary_max).toLocaleString()}`;
+  else if (job.salary_min) salStr = `From $${Math.round(job.salary_min).toLocaleString()}`;
+  let posted = '';
+  if (job.created) {
+    const diff = Math.round((Date.now() - new Date(job.created)) / 86400000);
+    posted = diff === 0 ? 'Today' : diff === 1 ? 'Yesterday' : `${diff}d ago`;
+  }
+  let tags = `<span class="stag ${typeCls(t)}">${typeLabel(t)}</span>`;
+  if (salStr) tags += `<span class="stag ts">${salStr}</span>`;
+  if (job.location?.display_name) tags += `<span class="stag tg">📍 ${job.location.display_name}</span>`;
+  if (posted) tags += `<span class="stag tg">📅 ${posted}</span>`;
+  document.getElementById('s-tags').innerHTML = tags;
+  sheet.classList.add('open'); leg.classList.add('up');
+}
+
+function closeSheet() {
+  sheet.classList.remove('open'); leg.classList.remove('up');
+  if (activeMarkerEl) { activeMarkerEl.classList.remove('active'); activeMarkerEl = null; }
+}
+
+// ── SEARCH AREA ──
+async function searchArea() {
+  if (drawRect) { map.removeLayer(drawRect); drawRect = null; }
+  const centre = map.getCenter();
+  lastSearchCenter = centre;
+  const zoom = map.getZoom();
+  const radius = Math.round(40000 / Math.pow(2, zoom - 8));
+  const clampedRadius = Math.max(10, Math.min(50, radius));
+  const days   = parseInt(document.getElementById('days-select').value);
+  const kw     = document.getElementById('kw').value.trim() || undefined;
+  const salMin = document.getElementById('sal-min').value || undefined;
+  const salMax = document.getElementById('sal-max').value || undefined;
+
+  document.getElementById('loading').classList.remove('hide');
+  document.getElementById('err').classList.remove('show');
+  document.getElementById('refresh').classList.add('spinning');
+  shBtn.classList.remove('show');
+  closeSheet();
+
+  try {
+    const raw = await fetchJobs(centre.lat, centre.lng, clampedRadius, days, kw, salMin, salMax);
+    processResults(raw, centre);
+  } catch(e) {
+    console.error(e);
+    showErr('Could not load jobs. Try again.');
+  }
+
+  document.getElementById('loading').classList.add('hide');
+  document.getElementById('refresh').classList.remove('spinning');
+}
+
+function showErr(msg) {
+  const el = document.getElementById('err');
+  el.textContent = msg; el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 6000);
+}
+
+// ── EVENTS ──
+map.on('click', e => { if (!drawMode) closeSheet(); });
+document.getElementById('drag').addEventListener('click', closeSheet);
+
+map.on('moveend zoomend', () => {
+  if (!lastSearchCenter) return;
+  const c = map.getCenter();
+  if (map.distance([c.lat, c.lng], [lastSearchCenter.lat, lastSearchCenter.lng]) > 3000) {
+    shBtn.classList.add('show');
+  }
+  render();
+});
+
+document.querySelectorAll('.fp').forEach(b => {
+  b.addEventListener('click', () => {
+    document.querySelectorAll('.fp').forEach(x => x.classList.remove('on'));
+    b.classList.add('on');
+    activeFilter = b.dataset.f;
+    render();
+  });
+});
+
+let kt;
+document.getElementById('kw').addEventListener('input', () => {
+  clearTimeout(kt); kt = setTimeout(() => {
+    lastSearchCenter = map.getCenter();
+    searchArea();
+  }, 600);
+});
+
+let daysTimer;
+document.getElementById('days-select').addEventListener('change', () => {
+  clearTimeout(daysTimer);
+  lastSearchCenter = null;
+  daysTimer = setTimeout(() => searchArea(), 100);
+});
+
+['sal-min','sal-max'].forEach(id => {
+  document.getElementById(id).addEventListener('change', () => {
+    lastSearchCenter = map.getCenter();
+    searchArea();
+  });
+});
+
+searchArea();
+</script>
+</body>
+</html>
