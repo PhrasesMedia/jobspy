@@ -163,6 +163,7 @@ select.fp{-webkit-appearance:none;cursor:pointer;outline:none;padding-right:22px
 <div id="err"></div>
 <div id="draw-hint">Click and drag to select an area</div>
 <button id="reload-btn" onclick="reloadPool()">🔄 Reload jobs</button>
+<button id="clear-box" onclick="clearBox()" style="position:absolute;top:108px;left:50%;transform:translateX(-50%);margin-left:110px;z-index:1000;background:rgba(26,29,39,.95);color:var(--muted);border:1px solid var(--border);border-radius:20px;padding:9px 14px;font-size:12px;font-weight:600;font-family:var(--font);cursor:pointer;display:none;backdrop-filter:blur(16px);white-space:nowrap">✕ Clear box</button>
 
 <div id="hdr">
   <div class="logo">🗺️ Job<span>Map</span></div>
@@ -373,6 +374,7 @@ function render() {
   });
 
   document.getElementById('cv').textContent = visible.length;
+  document.getElementById('clear-box').style.display = drawnBounds ? 'block' : 'none';
 
   visible.forEach(job => {
     const el = document.createElement('div');
@@ -423,6 +425,13 @@ function closeSheet() {
   sheet.classList.remove('open');
   leg.classList.remove('up');
   if (activeMarkerEl) { activeMarkerEl.classList.remove('active'); activeMarkerEl = null; }
+}
+
+function clearBox() {
+  drawnBounds = null;
+  if (drawRect) { map.removeLayer(drawRect); drawRect = null; }
+  document.getElementById('clear-box').style.display = 'none';
+  render();
 }
 
 function showErr(msg) {
@@ -507,20 +516,12 @@ map.getContainer().addEventListener('touchend', e=>{
 map.on('click', ()=>{ if(!drawMode) closeSheet(); });
 document.getElementById('drag').addEventListener('click', closeSheet);
 
-// Re-render on pan/zoom (respects current view as filter)
+// Re-render on pan/zoom
 map.on('moveend zoomend', ()=>{
-  // If no drawn box, re-render based on new view
-  if (!drawnBounds) render();
+  render(); // render always respects drawnBounds if set, otherwise uses map view
 });
 
-// Clear drawn box when user pans map
-map.on('dragstart', ()=>{
-  if (drawnBounds) {
-    drawnBounds = null;
-    if (drawRect) { map.removeLayer(drawRect); drawRect = null; }
-    render();
-  }
-});
+// Drawn box persists until user draws a new one or clicks refresh
 
 document.querySelectorAll('.fp[data-f]').forEach(b=>{
   b.addEventListener('click',()=>{
