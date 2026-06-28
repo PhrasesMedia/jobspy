@@ -430,7 +430,9 @@ function closeSheet() {
 async function searchBounds(bounds) {
   if (loading) return;
   loading = true;
-  pool = [];
+  pool = []; // clear all existing jobs — fresh search only
+  markers.forEach(m => map.removeLayer(m)); markers = [];
+  document.getElementById('cv').textContent = '0';
 
   loadEl.classList.remove('hide');
   errEl.classList.remove('show');
